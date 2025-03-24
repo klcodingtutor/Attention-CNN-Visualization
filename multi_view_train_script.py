@@ -26,16 +26,26 @@ test_transform = transforms.Compose([
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
 ])
 
-# Ensure the data directory exists
-os.makedirs(args.data_folder, exist_ok=True)
 
-# Load CIFAR-10 dataset
-train_dataset = datasets.CIFAR10(root=args.data_folder, train=True, download=True, transform=train_transform)
-test_dataset = datasets.CIFAR10(root=args.data_folder, train=False, download=True, transform=test_transform)
+# Load datasets
+train_dataset = datasets.CIFAR10(root=data_root, train=True, download=False, transform=train_transform)
+test_dataset = datasets.CIFAR10(root=data_root, train=False, download=False, transform=test_transform)
+
+# Validate dataset sizes
+print(f"Training dataset size: {len(train_dataset)} samples")
+print(f"Test dataset size: {len(test_dataset)} samples")
+if len(train_dataset) == 0 or len(test_dataset) == 0:
+    raise ValueError("One or both datasets are empty. Check data integrity in {data_root}/cifar-10-batches-py/.")
 
 # Create DataLoaders
 train_generator = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
 test_generator = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
+
+# Validate DataLoader
+train_iter = iter(train_generator)
+images, labels = next(train_iter)
+print(f"Sample batch shape: {images.shape} (expected: [{args.batch_size}, 3, 32, 32])")
+print(f"Sample label shape: {labels.shape} (expected: [{args.batch_size}])")
 
 # Instantiate the MultiViewAttentionCNN model
 model = MultiViewAttentionCNN(image_size=args.img_size, image_depth=3, num_classes=args.num_classes, 
@@ -54,7 +64,7 @@ def train_single_view(submodel, dataloader, optimizer, criterion, device, num_ep
     
     epoch_loss = []
     epoch_accuracy = []
-    for i, (images, labels) in tqdm(enumerate(dataloader)):
+    for i, (images, labels) in tqdm(enumerate(dataloader), total=len(dataloader)):
         images, labels = images.to(device), labels.to(device)
         
         if is_train:
@@ -80,9 +90,9 @@ def train_multi_view(model, dataloader, optimizer, criterion, device, num_epochs
     
     epoch_loss = []
     epoch_accuracy = []
-    for i, (images, labels) in tqdm(enumerate(dataloader)):
+    for i, (images, labels) in tqdm(enumerate(dataloader), total=len(dataloader)):
         images, labels = images.to(device), labels.to(device)
-        view_a, view_b, view_c = images, images, images  # Use same images for all views
+        view_a, view_b, view_c = images, images, images
         
         if is_train:
             optimizer.zero_grad()
