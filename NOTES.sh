@@ -64,8 +64,8 @@ if [ -d .git ]; then
   fi
 
   # Command to set the repository to public
-  # echo "Setting repository '$repo_owner/$repo_name' to public..."
-  # gh repo edit "$repo_owner/$repo_name" --visibility public --accept-visibility-change-consequences
+  echo "Setting repository '$repo_owner/$repo_name' to public..."
+  gh repo edit "$repo_owner/$repo_name" --visibility public --accept-visibility-change-consequences
 
   # Command to set the repository to private (commented out for now)
   echo "Setting repository '$repo_owner/$repo_name' to private..."

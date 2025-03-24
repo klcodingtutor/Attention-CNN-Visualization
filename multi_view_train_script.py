@@ -6,6 +6,7 @@ from torch.utils.data import DataLoader
 from torch.optim import Adam
 from torchsummary import summary
 from torchvision import datasets, transforms
+import os
 
 from runtime_args import args  # Import runtime arguments
 from attention_cnn import AttentionCNN, MultiViewAttentionCNN  # Import model classes
@@ -15,15 +16,18 @@ device = torch.device("cuda:0" if torch.cuda.is_available() and args.device == '
 
 # Define transforms for CIFAR-10
 train_transform = transforms.Compose([
-    transforms.RandomHorizontalFlip(),  # Data augmentation
+    transforms.RandomHorizontalFlip(),
     transforms.RandomCrop(32, padding=4),
     transforms.ToTensor(),
-    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))  # CIFAR-10 mean and std
+    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
 ])
 test_transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
 ])
+
+# Ensure the data directory exists
+os.makedirs(args.data_folder, exist_ok=True)
 
 # Load CIFAR-10 dataset
 train_dataset = datasets.CIFAR10(root=args.data_folder, train=True, download=True, transform=train_transform)
