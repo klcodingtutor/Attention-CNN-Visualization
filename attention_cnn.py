@@ -159,26 +159,20 @@ class MultiViewAttentionCNN(nn.Module):
         '''Perform forward propagation for three parallel image inputs.'''
 
         # Process each view through its respective AttentionCNN
-        features_a_1, features_a_2, features_a_3 = self.cnn_view_a(view_a)  # Extract feature vector
-        features_b_1, features_b_2, features_b_3 = self.cnn_view_b(view_b)
-        features_c_1, features_c_2, features_c_3 = self.cnn_view_c(view_c)
+        
+        features_a_reshaped_filters, features_a_x, features_a_output = self.cnn_view_a(view_a)  # Extract feature vector
+        features_b_reshaped_filters, features_b_x, features_b_output = self.cnn_view_b(view_b)
+        features_c_reshaped_filters, features_c_x, features_c_output = self.cnn_view_c(view_c)
 
-        # Concatenate the attended features from all views along the feature dimension
-        combined_features = torch.cat((features_a_1, features_b_1, features_c_1), dim=1)
-        print(f"Size of combined features: {combined_features.size()}")
-        print(f"Size of features_a_1: {features_a_1.size()}")
-        print(f"Size of features_a_2: {features_a_1.size()}")
-        print(f"Size of features_a_3: {features_a_1.size()}")
-        print(f"Size of features_b_1: {features_b_1.size()}")
-        print(f"Size of features_b_2: {features_b_1.size()}")
-        print(f"Size of features_b_3: {features_b_1.size()}")
-        print(f"Size of features_c_1: {features_c_1.size()}")
-        print(f"Size of features_c_2: {features_c_1.size()}")
-        print(f"Size of features_c_3: {features_c_1.size()}")
-        # Size of combined features: torch.Size([32, 210, 4, 4])
-        # Size of view_a: torch.Size([32, 70, 4, 4])
-        # Size of view_b: torch.Size([32, 70, 4, 4])
-        # Size of view_c: torch.Size([32, 70, 4, 4])
+        print(f"Size of features_a_reshaped_filters : {features_a_reshaped_filters.size()}")
+        print(f"Size of features_a_x                : {features_a_x.size()}")
+        print(f"Size of features_a_output           : {features_a_output.size()}")
+        print(f"Size of features_b_reshaped_filters : {features_b_reshaped_filters.size()}")
+        print(f"Size of features_b_x                : {features_b_x.size()}")
+        print(f"Size of features_b_output           : {features_b_output.size()}")
+        print(f"Size of features_c_reshaped_filters : {features_c_reshaped_filters.size()}")
+        print(f"Size of features_c_x                : {features_c_x.size()}")
+        print(f"Size of features_c_output           : {features_c_output.size()}")
 
 
         # Concatenate the attended features from all views along the feature dimension
