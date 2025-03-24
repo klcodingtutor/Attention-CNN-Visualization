@@ -181,7 +181,15 @@ class MultiViewAttentionCNN(nn.Module):
         # Size of view_c: torch.Size([32, 70, 4, 4])
 
 
-        # Pass the combined features through the fusion layers for final classification
+        # Concatenate the attended features from all views along the feature dimension
+        combined_features = torch.cat((features_a_1, features_b_1, features_c_1), dim=1)
+        print(f"Size of combined features: {combined_features.size()}")  # [32, 210, 4, 4]
+
+        # Flatten the combined features to [batch_size, 3360]
+        combined_features = combined_features.view(combined_features.size(0), -1)
+        print(f"Size after flattening: {combined_features.size()}")  # [32, 3360]
+
+        # Pass the flattened features through the fusion layers
         output = self.fusion_layers(combined_features)
         
         return output
