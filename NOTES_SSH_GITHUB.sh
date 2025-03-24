@@ -1,32 +1,31 @@
 #!/bin/bash
 
+# -----------------------------------------------------------------------------------
 # Step 1: Generate an SSH key pair (change the email to your GitHub email)
-# -t: specifies the type of key to create (rsa is a common type)
-# -b: sets the key length (4096 is recommended for security)
-# -f: specifies the file path to save the key
-# -C: adds a comment, usually your GitHub email
-echo "Generating an SSH key pair..."
-ssh-keygen -t rsa -b 4096 -C "your-email@example.com" -f ~/.ssh/github_key -N ""
+# echo "Generating an SSH key pair..."
+# ssh-keygen -t rsa -b 4096 -C "your-email@example.com" -f ~/.ssh/github_key -N ""
 
-# Step 2: Add the new SSH key to the SSH agent
-# Start the ssh-agent in the background
-echo "Starting the ssh-agent..."
-eval "$(ssh-agent -s)"
+# -----------------------------------------------------------------------------------
+# Step 2: Add the new SSH key to the SSH agent # Start the ssh-agent in the background
+# echo "Starting the ssh-agent..."
+# eval "$(ssh-agent -s)"
 
 # Add the private key to the ssh-agent
-ssh-add ~/.ssh/github_key
+# ssh-add ~/.ssh/github_key
 
+# -----------------------------------------------------------------------------------
 # Step 3: Display the public key for you to add it to your GitHub account
 # The public key is the .pub file generated earlier
-echo "Copy the following SSH key and add it to your GitHub account:"
-cat ~/.ssh/github_key.pub
+# echo "Copy the following SSH key and add it to your GitHub account:"
+# cat ~/.ssh/github_key.pub
 
+# -----------------------------------------------------------------------------------
 # Step 4: Authenticate with GitHub CLI (if not already logged in)
-unset GITHUB_TOKEN
-echo "Authenticating with GitHub CLI..."
-gh auth login
-# Follow the prompts to authenticate (manual steps may be required)
+# unset GITHUB_TOKEN
+# echo "Authenticating with GitHub CLI..."
+# gh auth login
 
+# -----------------------------------------------------------------------------------
 # Check if the current directory is a Git repository
 if [ -d .git ]; then
   echo "Inside a Git repository. Proceeding to fork..."
@@ -46,6 +45,7 @@ else
   echo "This is not a Git repository. Please navigate to a valid Git repo first."
 fi
 
+# -----------------------------------------------------------------------------------
 # Check if the current directory is a Git repository
 if [ -d .git ]; then
   echo "Inside a Git repository. Detecting repository details..."
@@ -66,14 +66,24 @@ if [ -d .git ]; then
   # Command to set the repository to public
   echo "Setting repository '$repo_owner/$repo_name' to public..."
   gh repo edit "$repo_owner/$repo_name" --visibility public --accept-visibility-change-consequences
+  sleep 2
 
   # Command to set the repository to private (commented out for now)
   echo "Setting repository '$repo_owner/$repo_name' to private..."
   gh repo edit "$repo_owner/$repo_name" --visibility private --accept-visibility-change-consequences
+  sleep 2
 
 else
   echo "This is not a Git repository. Please navigate to a valid Git repository."
 fi
+
+
+
+
+
+
+
+
 
 # # Step 7: Configure `git` to use the specific SSH key
 # # Create or modify the SSH config file
