@@ -8,10 +8,10 @@ NUM_CLASSES=10                # CIFAR-10 has 10 classes
 IMG_SIZE=32                   # CIFAR-10 images are 32x32
 BATCH_SIZE=32
 LEARNING_RATE=0.001
-EPOCHS=20
+EPOCHS=80   # will div by 4 for multi-stage
 DROPOUT_RATE=0.5
 NUM_WORKERS=4
-DEVICE="gpu"
+DEVICE="gpu"    # either "gpu" or "cpu"
 MODEL_SAVE_PATH="./models"
 
 # Create directories if they don't exist (no train/test subdirs)
