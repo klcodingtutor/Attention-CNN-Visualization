@@ -1,63 +1,68 @@
-# multi_view_train_script.py
+'''Script to train the MultiViewAttentionCNN model in stages on CIFAR-10.'''
 
-'''Script to train the MultiViewAttentionCNN model in stages.'''
+from tqdm import tqdm
+import torch
+from torch.utils.data import DataLoader
+from torch.optim import Adam
+from torchsummary import summary
+from torchvision import datasets, transforms
 
-from tqdm import tqdm  # Import tqdm for progress bar visualization
-import torch  # Import PyTorch for tensor operations and neural networks
-from torch.utils.data import DataLoader  # Import DataLoader for batching and shuffling data
-from torch.optim import Adam  # Import Adam optimizer for gradient descent
-from torchsummary import summary  # Import summary to display model architecture
-from torchvision import transforms  # Import transforms for image preprocessing
+from runtime_args import args  # Import runtime arguments
+from attention_cnn import AttentionCNN, MultiViewAttentionCNN  # Import model classes
 
-from runtime_args import args  # Import runtime arguments (e.g., batch_size, learning_rate)
-from attention_cnn import AttentionCNN, MultiViewAttentionCNN  # Import the custom model classes
-from load_dataset import LoadDataset  # Import custom dataset loader class
-
-# Set the device to GPU if available and specified in args, otherwise use CPU
+# Set the device
 device = torch.device("cuda:0" if torch.cuda.is_available() and args.device == 'gpu' else 'cpu')
 
-# Initialize the training dataset (used for all views for now)
-train_dataset = LoadDataset(dataset_folder_path=args.data_folder, image_size=args.img_size, image_depth=args.img_depth, train=True,
-                            transform=transforms.ToTensor())
-# Initialize the testing dataset (used for all views for now)
-test_dataset = LoadDataset(dataset_folder_path=args.data_folder, image_size=args.img_size, image_depth=args.img_depth, train=False,
-                           transform=transforms.ToTensor())
+# Define transforms for CIFAR-10
+train_transform = transforms.Compose([
+    transforms.RandomHorizontalFlip(),  # Data augmentation
+    transforms.RandomCrop(32, padding=4),
+    transforms.ToTensor(),
+    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))  # CIFAR-10 mean and std
+])
+test_transform = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+])
 
-# Create DataLoaders for training and testing (shared across views A, B, C for now)
+# Load CIFAR-10 dataset
+train_dataset = datasets.CIFAR10(root=args.data_folder, train=True, download=True, transform=train_transform)
+test_dataset = datasets.CIFAR10(root=args.data_folder, train=False, download=True, transform=test_transform)
+
+# Create DataLoaders
 train_generator = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
-test_generator = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
+test_generator = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
 
 # Instantiate the MultiViewAttentionCNN model
-model = MultiViewAttentionCNN(image_size=args.img_size, image_depth=args.img_depth, num_classes=args.num_classes, 
+model = MultiViewAttentionCNN(image_size=args.img_size, image_depth=3, num_classes=args.num_classes, 
                               drop_prob=args.dropout_rate, device=device)
 model = model.to(device)
 
-# Define the loss function as CrossEntropyLoss for classification tasks
+# Define the loss function
 criterion = torch.nn.CrossEntropyLoss()
 
-# Print a summary of the model architecture (using view A as an example input)
-summary(model.cnn_view_a, (args.img_depth, args.img_size, args.img_size))
+# Print model summary (for one view)
+summary(model.cnn_view_a, (3, args.img_size, args.img_size))
 
 def train_single_view(submodel, dataloader, optimizer, criterion, device, num_epochs, is_train=True):
-    '''Train or evaluate a single view submodule.'''
     mode = "Training" if is_train else "Testing"
     submodel.train() if is_train else submodel.eval()
     
     epoch_loss = []
     epoch_accuracy = []
-    for i, sample in tqdm(enumerate(dataloader)):
-        batch_x, batch_y = sample['image'].to(device), sample['label'].to(device)
+    for i, (images, labels) in tqdm(enumerate(dataloader)):
+        images, labels = images.to(device), labels.to(device)
         
         if is_train:
             optimizer.zero_grad()
         with torch.set_grad_enabled(is_train):
-            _, _, net_output = submodel(batch_x)
-            total_loss = criterion(net_output, batch_y)
+            _, _, net_output = submodel(images)
+            total_loss = criterion(net_output, labels)
             if is_train:
                 total_loss.backward()
                 optimizer.step()
         
-        batch_acc = submodel.calculate_accuracy(net_output, batch_y)
+        batch_acc = submodel.calculate_accuracy(net_output, labels)
         epoch_loss.append(total_loss.item())
         epoch_accuracy.append(batch_acc)
     
@@ -66,27 +71,25 @@ def train_single_view(submodel, dataloader, optimizer, criterion, device, num_ep
     return avg_loss, avg_acc
 
 def train_multi_view(model, dataloader, optimizer, criterion, device, num_epochs, is_train=True):
-    '''Train or evaluate the full multi-view model.'''
     mode = "Training" if is_train else "Testing"
     model.train() if is_train else model.eval()
     
     epoch_loss = []
     epoch_accuracy = []
-    for i, sample in tqdm(enumerate(dataloader)):
-        batch_x, batch_y = sample['image'].to(device), sample['label'].to(device)
-        # Duplicate the same batch for views B and C (for now)
-        view_a, view_b, view_c = batch_x, batch_x, batch_x
+    for i, (images, labels) in tqdm(enumerate(dataloader)):
+        images, labels = images.to(device), labels.to(device)
+        view_a, view_b, view_c = images, images, images  # Use same images for all views
         
         if is_train:
             optimizer.zero_grad()
         with torch.set_grad_enabled(is_train):
             net_output = model(view_a, view_b, view_c)
-            total_loss = criterion(net_output, batch_y)
+            total_loss = criterion(net_output, labels)
             if is_train:
                 total_loss.backward()
                 optimizer.step()
         
-        batch_acc = model.calculate_accuracy(net_output, batch_y)
+        batch_acc = model.calculate_accuracy(net_output, labels)
         epoch_loss.append(total_loss.item())
         epoch_accuracy.append(batch_acc)
     
@@ -95,7 +98,7 @@ def train_multi_view(model, dataloader, optimizer, criterion, device, num_epochs
     return avg_loss, avg_acc
 
 # Training stages
-num_epochs_per_stage = args.epoch // 4  # Divide total epochs across 4 stages
+num_epochs_per_stage = args.epoch // 4
 best_accuracy = 0
 
 # Stage 1: Train View A
@@ -175,9 +178,8 @@ for epoch_idx in range(num_epochs_per_stage):
     print(f"Training Loss: {train_loss:.4f}, Training Accuracy: {train_acc:.2f}%")
     print(f"Testing Loss: {test_loss:.4f}, Testing Accuracy: {test_acc:.2f}%")
     
-    # Save the model if testing accuracy improves
     if test_acc > best_accuracy:
-        torch.save(model.state_dict(), args.model_save_path.rstrip('/') + '/multi_view_attention_cnn.pth')
+        torch.save(model.state_dict(), args.model_save_path.rstrip('/') + '/multi_view_attention_cnn_cifar10.pth')
         best_accuracy = test_acc
         print("Model is saved!")
     print('------------------------------------------------------------------------------')
