@@ -47,29 +47,29 @@ else
 fi
 
 
-# Step 7: Configure `git` to use the specific SSH key
-# Create or modify the SSH config file
-echo "Configuring Git to use the specific SSH key..."
-cat <<EOL >> ~/.ssh/config
-Host github.com
-  HostName github.com
-  User git
-  IdentityFile ~/.ssh/github_key
-  IdentitiesOnly yes
-EOL
+# # Step 7: Configure `git` to use the specific SSH key
+# # Create or modify the SSH config file
+# echo "Configuring Git to use the specific SSH key..."
+# cat <<EOL >> ~/.ssh/config
+# Host github.com
+#   HostName github.com
+#   User git
+#   IdentityFile ~/.ssh/github_key
+#   IdentitiesOnly yes
+# EOL
 
-# Step 8: Verify remote URLs
-echo "Verifying remote URLs..."
-cd repo-name
-git remote -v
+# # Step 8: Verify remote URLs
+# echo "Verifying remote URLs..."
+# cd repo-name
+# git remote -v
 
-# Step 9: Make a change, commit, and push to your forked repository
-# Example: Creating a placeholder README file
-echo "Adding a README file as an example..."
-echo "# My Forked Repository" > README.md
-git add README.md
-git commit -m "Added a README file"
-git push origin main
+# # Step 9: Make a change, commit, and push to your forked repository
+# # Example: Creating a placeholder README file
+# echo "Adding a README file as an example..."
+# echo "# My Forked Repository" > README.md
+# git add README.md
+# git commit -m "Added a README file"
+# git push origin main
 
-# Done
-echo "All steps completed! Your repository is now set up."
+# # Done
+# echo "All steps completed! Your repository is now set up."
