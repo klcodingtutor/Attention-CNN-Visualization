@@ -156,29 +156,25 @@ class MultiViewAttentionCNN(nn.Module):
             m.bias.data.fill_(0.01)
 
     def forward(self, view_a, view_b, view_c):
-        '''Perform forward propagation for three parallel image inputs.'''
+    '''Perform forward propagation for three parallel image inputs.'''
 
-        # Process each view through its respective AttentionCNN
-        _, _, features_a = self.cnn_view_a(view_a)  # Extract final output (attended features)
-        _, _, features_b = self.cnn_view_b(view_b)
-        _, _, features_c = self.cnn_view_c(view_c)
+    # Process each view through its respective AttentionCNN
+    _, features_a, _ = self.cnn_view_a(view_a)  # Extract feature vector
+    _, features_b, _ = self.cnn_view_b(view_b)
+    _, features_c, _ = self.cnn_view_c(view_c)
 
-        # Note: features_a, features_b, features_c are the attended feature vectors (x1 after attention),
-        # not the final class logits, since we want to fuse features before classification.
+    # Concatenate the attended features from all views along the feature dimension
+    combined_features = torch.cat((features_a, features_b, features_c), dim=1)
+    print(f"Size of combined features: {combined_features.size()}")
+    print(f"Size of view_a: {features_a.size()}")
+    print(f"Size of view_b: {features_b.size()}")
+    print(f"Size of view_c: {features_c.size()}")
 
-        # Concatenate the attended features from all views along the feature dimension
-        combined_features = torch.cat((features_a, features_b, features_c), dim=1)
-        print(f"Size of combined features: {combined_features.size()}")
-        print(f"Size of view_a: {features_a.size()}")
-        print(f"Size of view_b: {features_b.size()}")
-        print(f"Size of view_c: {features_c.size()}")
-
-        # Pass the combined features through the fusion layers for final classification
-        output = self.fusion_layers(combined_features)
-        
-
-        return output
-
+    # Pass the combined features through the fusion layers for final classification
+    output = self.fusion_layers(combined_features)
+    
+    return output
+    
     def calculate_accuracy(self, predicted, target):
         '''Calculate the accuracy of the model's predictions.'''
         num_data = target.size()[0]
