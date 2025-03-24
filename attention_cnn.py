@@ -159,16 +159,27 @@ class MultiViewAttentionCNN(nn.Module):
         '''Perform forward propagation for three parallel image inputs.'''
 
         # Process each view through its respective AttentionCNN
-        _, features_a, _ = self.cnn_view_a(view_a)  # Extract feature vector
-        _, features_b, _ = self.cnn_view_b(view_b)
-        _, features_c, _ = self.cnn_view_c(view_c)
+        features_a_1, features_a_2, features_a_3 = self.cnn_view_a(view_a)  # Extract feature vector
+        features_b_1, features_b_2, features_b_3 = self.cnn_view_b(view_b)
+        features_c_1, features_c_2, features_c_3 = self.cnn_view_c(view_c)
 
         # Concatenate the attended features from all views along the feature dimension
         combined_features = torch.cat((features_a, features_b, features_c), dim=1)
         print(f"Size of combined features: {combined_features.size()}")
-        print(f"Size of view_a: {features_a.size()}")
-        print(f"Size of view_b: {features_b.size()}")
-        print(f"Size of view_c: {features_c.size()}")
+        print(f"Size of features_a_1: {features_a_1.size()}")
+        print(f"Size of features_a_2: {features_a_1.size()}")
+        print(f"Size of features_a_3: {features_a_1.size()}")
+        print(f"Size of features_b_1: {features_b_1.size()}")
+        print(f"Size of features_b_2: {features_b_1.size()}")
+        print(f"Size of features_b_3: {features_b_1.size()}")
+        print(f"Size of features_c_1: {features_c_1.size()}")
+        print(f"Size of features_c_2: {features_c_1.size()}")
+        print(f"Size of features_c_3: {features_c_1.size()}")
+        # Size of combined features: torch.Size([32, 210, 4, 4])
+        # Size of view_a: torch.Size([32, 70, 4, 4])
+        # Size of view_b: torch.Size([32, 70, 4, 4])
+        # Size of view_c: torch.Size([32, 70, 4, 4])
+
 
         # Pass the combined features through the fusion layers for final classification
         output = self.fusion_layers(combined_features)
