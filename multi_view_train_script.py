@@ -11,6 +11,9 @@ import os
 from runtime_args import args  # Import runtime arguments
 from attention_cnn import AttentionCNN, MultiViewAttentionCNN  # Import model classes
 
+print("------------------------------------------------------------")
+
+
 # Set the device
 device = torch.device("cuda:0" if torch.cuda.is_available() and args.device == 'gpu' else 'cpu')
 
@@ -35,7 +38,6 @@ if not os.path.exists(data_root):
     os.makedirs(data_root, exist_ok=True)
     print(f"Created directory: {data_root}")
 
-print("------------------------------------------------------------")
 # Download and load datasets
 train_dataset = datasets.CIFAR10(root=data_root, train=True, download=True, transform=train_transform)
 test_dataset = datasets.CIFAR10(root=data_root, train=False, download=True, transform=test_transform)
