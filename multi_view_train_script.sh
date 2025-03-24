@@ -11,7 +11,7 @@ LEARNING_RATE=0.001
 EPOCHS=20
 DROPOUT_RATE=0.5
 NUM_WORKERS=4
-DEVICE="gpu"
+DEVICE="CUDA"
 MODEL_SAVE_PATH="./models"
 
 # Create directories if they don't exist (no train/test subdirs)

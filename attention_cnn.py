@@ -110,3 +110,75 @@ class AttentionCNN(nn.Module):
         accuracy = correct_pred * (100 / num_data)  # Compute accuracy as a percentage
 
         return accuracy.item()  # Return accuracy as a Python scalar
+
+
+# Assuming AttentionCNN is already defined as in your previous code
+
+class MultiViewAttentionCNN(nn.Module):
+    '''A multi-view CNN architecture with attention mechanism for three parallel image inputs.'''
+
+    def __init__(self, image_size, image_depth, num_classes, drop_prob, device):
+        '''Initialize the multi-view model with three AttentionCNN submodules.'''
+
+        super(MultiViewAttentionCNN, self).__init__()
+
+        # Store parameters
+        self.image_size = image_size
+        self.image_depth = image_depth
+        self.num_classes = num_classes
+        self.drop_prob = drop_prob
+        self.device = device
+
+        # Instantiate three AttentionCNN submodules, one for each view
+        self.cnn_view_a = AttentionCNN(image_size, image_depth, num_classes, drop_prob, device)
+        self.cnn_view_b = AttentionCNN(image_size, image_depth, num_classes, drop_prob, device)
+        self.cnn_view_c = AttentionCNN(image_size, image_depth, num_classes, drop_prob, device)
+
+        # Calculate the combined feature vector size (3 views * feature_vector_size from one AttentionCNN)
+        single_feature_size = self.cnn_view_a.feature_vector_size
+        self.combined_feature_size = 3 * single_feature_size
+
+        # Define fusion layers to process the concatenated features
+        self.fusion_layers = nn.Sequential(
+            nn.Linear(self.combined_feature_size, 512),  # Reduce dimensionality and fuse features
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=self.drop_prob),
+            nn.Linear(512, num_classes)  # Final classification layer
+        )
+
+        # Initialize weights for the fusion layers
+        self.fusion_layers.apply(self.init_weights)
+
+    def init_weights(self, m):
+        '''Initialize weights for linear layers using Xavier initialization.'''
+        if type(m) == nn.Linear:
+            torch.nn.init.xavier_uniform_(m.weight)
+            m.bias.data.fill_(0.01)
+
+    def forward(self, view_a, view_b, view_c):
+        '''Perform forward propagation for three parallel image inputs.'''
+
+        # Process each view through its respective AttentionCNN
+        _, _, features_a = self.cnn_view_a(view_a)  # Extract final output (attended features)
+        _, _, features_b = self.cnn_view_b(view_b)
+        _, _, features_c = self.cnn_view_c(view_c)
+
+        # Note: features_a, features_b, features_c are the attended feature vectors (x1 after attention),
+        # not the final class logits, since we want to fuse features before classification.
+
+        # Concatenate the attended features from all views along the feature dimension
+        combined_features = torch.cat((features_a, features_b, features_c), dim=1)
+
+        # Pass the combined features through the fusion layers for final classification
+        output = self.fusion_layers(combined_features)
+
+        return output
+
+    def calculate_accuracy(self, predicted, target):
+        '''Calculate the accuracy of the model's predictions.'''
+        num_data = target.size()[0]
+        predicted = torch.argmax(predicted, dim=1)
+        correct_pred = torch.sum(predicted == target)
+        accuracy = correct_pred * (100 / num_data)
+        return accuracy.item()
+
