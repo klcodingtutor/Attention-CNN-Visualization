@@ -176,7 +176,7 @@ class MultiViewAttentionCNN(nn.Module):
 
 
         # Concatenate the attended features from all views along the feature dimension
-        combined_features = torch.cat((features_a_1, features_b_1, features_c_1), dim=1)
+        combined_features = torch.cat((features_a_reshaped_filters, features_b_reshaped_filters, features_c_reshaped_filters), dim=1)
         print(f"Size of combined features: {combined_features.size()}")  # [32, 210, 4, 4]
 
         # Flatten the combined features to [batch_size, 3360]
