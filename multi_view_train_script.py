@@ -26,8 +26,16 @@ test_transform = transforms.Compose([
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
 ])
 
+# Load CIFAR-10 dataset
+data_root = args.data_folder
+print(f"Loading CIFAR-10 from: {data_root}")
 
-# Load datasets
+# Ensure the data directory is ready
+if not os.path.exists(data_root):
+    os.makedirs(data_root, exist_ok=True)
+    print(f"Created directory: {data_root}")
+
+# Download and load datasets
 train_dataset = datasets.CIFAR10(root=data_root, train=True, download=True, transform=train_transform)
 test_dataset = datasets.CIFAR10(root=data_root, train=False, download=True, transform=test_transform)
 
@@ -35,17 +43,20 @@ test_dataset = datasets.CIFAR10(root=data_root, train=False, download=True, tran
 print(f"Training dataset size: {len(train_dataset)} samples")
 print(f"Test dataset size: {len(test_dataset)} samples")
 if len(train_dataset) == 0 or len(test_dataset) == 0:
-    raise ValueError("One or both datasets are empty. Check data integrity in {data_root}/cifar-10-batches-py/.")
+    raise ValueError(f"One or both datasets are empty. Check data integrity in {data_root}/cifar-10-batches-py/.")
 
 # Create DataLoaders
 train_generator = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
 test_generator = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
 
 # Validate DataLoader
-train_iter = iter(train_generator)
-images, labels = next(train_iter)
-print(f"Sample batch shape: {images.shape} (expected: [{args.batch_size}, 3, 32, 32])")
-print(f"Sample label shape: {labels.shape} (expected: [{args.batch_size}])")
+try:
+    train_iter = iter(train_generator)
+    images, labels = next(train_iter)
+    print(f"Sample batch shape: {images.shape} (expected: [{args.batch_size}, 3, 32, 32])")
+    print(f"Sample label shape: {labels.shape} (expected: [{args.batch_size}])")
+except StopIteration:
+    raise ValueError("Training DataLoader is empty. Check dataset loading.")
 
 # Instantiate the MultiViewAttentionCNN model
 model = MultiViewAttentionCNN(image_size=args.img_size, image_depth=3, num_classes=args.num_classes, 
@@ -80,8 +91,8 @@ def train_single_view(submodel, dataloader, optimizer, criterion, device, num_ep
         epoch_loss.append(total_loss.item())
         epoch_accuracy.append(batch_acc)
     
-    avg_loss = sum(epoch_loss) / (i + 1)
-    avg_acc = sum(epoch_accuracy) / (i + 1)
+    avg_loss = sum(epoch_loss) / len(dataloader)
+    avg_acc = sum(epoch_accuracy) / len(dataloader)
     return avg_loss, avg_acc
 
 def train_multi_view(model, dataloader, optimizer, criterion, device, num_epochs, is_train=True):
@@ -107,8 +118,8 @@ def train_multi_view(model, dataloader, optimizer, criterion, device, num_epochs
         epoch_loss.append(total_loss.item())
         epoch_accuracy.append(batch_acc)
     
-    avg_loss = sum(epoch_loss) / (i + 1)
-    avg_acc = sum(epoch_accuracy) / (i + 1)
+    avg_loss = sum(epoch_loss) / len(dataloader)
+    avg_acc = sum(epoch_accuracy) / len(dataloader)
     return avg_loss, avg_acc
 
 # Training stages

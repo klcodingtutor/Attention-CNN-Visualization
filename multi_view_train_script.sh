@@ -14,10 +14,8 @@ NUM_WORKERS=4
 DEVICE="gpu"
 MODEL_SAVE_PATH="./models"
 
-# Create directories if they don't exist
+# Create directories if they don't exist (no train/test subdirs)
 mkdir -p "$DATA_FOLDER"
-mkdir -p "$DATA_FOLDER"/train
-mkdir -p "$DATA_FOLDER"/test
 mkdir -p "$MODEL_SAVE_PATH"
 
 # Run the training script
