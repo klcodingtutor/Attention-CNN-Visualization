@@ -33,7 +33,7 @@ if [ -d .git ]; then
 
   # Get the repository's owner and name from the remote URL
   repo_url=$(git config --get remote.origin.url)
-  
+
   # Extract the owner and repository name using pattern matching
   repo_name=$(basename -s .git "$repo_url")
   repo_owner=$(basename "$(dirname "$repo_url")")
@@ -46,6 +46,34 @@ else
   echo "This is not a Git repository. Please navigate to a valid Git repo first."
 fi
 
+# Check if the current directory is a Git repository
+if [ -d .git ]; then
+  echo "Inside a Git repository. Detecting repository details..."
+
+  # Get the repository's remote URL
+  repo_url=$(git config --get remote.origin.url)
+
+  # Extract the repository name and owner
+  repo_name=$(basename -s .git "$repo_url")       # Removes the ".git" suffix
+  repo_owner=$(basename "$(dirname "$repo_url")") # Extracts the owner from the URL
+
+  # Check if GitHub CLI is installed
+  if ! command -v gh &>/dev/null; then
+    echo "GitHub CLI (gh) is not installed. Please install it first."
+    exit 1
+  fi
+
+  # Command to set the repository to public
+  # echo "Setting repository '$repo_owner/$repo_name' to public..."
+  # gh repo edit "$repo_owner/$repo_name" --visibility public --accept-visibility-change-consequences
+
+  # Command to set the repository to private (commented out for now)
+  echo "Setting repository '$repo_owner/$repo_name' to private..."
+  gh repo edit "$repo_owner/$repo_name" --visibility private --accept-visibility-change-consequences
+
+else
+  echo "This is not a Git repository. Please navigate to a valid Git repository."
+fi
 
 # # Step 7: Configure `git` to use the specific SSH key
 # # Create or modify the SSH config file
@@ -73,3 +101,18 @@ fi
 
 # # Done
 # echo "All steps completed! Your repository is now set up."
+
+#   # Prompt the user for the desired visibility
+#   echo "Do you want to set the repository visibility to 'public' or 'private'? Enter your choice:"
+# #   read -r visibility
+
+#   # Validate the user's input
+#   if [[ "$visibility" == "public" || "$visibility" == "private" ]]; then
+#     echo "Setting repository '$repo_owner/$repo_name' to $visibility..."
+
+#     # Use the --accept-visibility-change-consequences flag with the visibility command
+#     gh repo edit "$repo_owner/$repo_name" --visibility "$visibility" --accept-visibility-change-consequences
+#   else
+#     echo "Invalid input. Please enter 'public' or 'private'."
+#     exit 1
+#   fi
