@@ -6,9 +6,9 @@
 DATA_FOLDER="./cifar10_data"  # Directory to store CIFAR-10 data
 NUM_CLASSES=10                # CIFAR-10 has 10 classes
 IMG_SIZE=32                   # CIFAR-10 images are 32x32
-BATCH_SIZE=32
+BATCH_SIZE=64
 LEARNING_RATE=0.001
-EPOCHS=4   # will div by 4 for multi-stage
+EPOCHS=20                     # will div by 4 for multi-stage
 DROPOUT_RATE=0.5
 NUM_WORKERS=4
 DEVICE="gpu"    # either "gpu" or "cpu"
