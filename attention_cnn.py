@@ -164,24 +164,24 @@ class MultiViewAttentionCNN(nn.Module):
         features_b_reshaped_filters, features_b_x, features_b_output = self.cnn_view_b(view_b)
         features_c_reshaped_filters, features_c_x, features_c_output = self.cnn_view_c(view_c)
 
-        print(f"Size of features_a_reshaped_filters : {features_a_reshaped_filters.size()}")
-        print(f"Size of features_a_x                : {features_a_x.size()}")
-        print(f"Size of features_a_output           : {features_a_output.size()}")
-        print(f"Size of features_b_reshaped_filters : {features_b_reshaped_filters.size()}")
-        print(f"Size of features_b_x                : {features_b_x.size()}")
-        print(f"Size of features_b_output           : {features_b_output.size()}")
-        print(f"Size of features_c_reshaped_filters : {features_c_reshaped_filters.size()}")
-        print(f"Size of features_c_x                : {features_c_x.size()}")
-        print(f"Size of features_c_output           : {features_c_output.size()}")
+        # print(f"Size of features_a_reshaped_filters : {features_a_reshaped_filters.size()}")
+        # print(f"Size of features_a_x                : {features_a_x.size()}")
+        # print(f"Size of features_a_output           : {features_a_output.size()}")
+        # print(f"Size of features_b_reshaped_filters : {features_b_reshaped_filters.size()}")
+        # print(f"Size of features_b_x                : {features_b_x.size()}")
+        # print(f"Size of features_b_output           : {features_b_output.size()}")
+        # print(f"Size of features_c_reshaped_filters : {features_c_reshaped_filters.size()}")
+        # print(f"Size of features_c_x                : {features_c_x.size()}")
+        # print(f"Size of features_c_output           : {features_c_output.size()}")
 
 
         # Concatenate the attended features from all views along the feature dimension
         combined_features = torch.cat((features_a_reshaped_filters, features_b_reshaped_filters, features_c_reshaped_filters), dim=1)
-        print(f"Size of combined features: {combined_features.size()}")  # [32, 210, 4, 4]
+        # print(f"Size of combined features: {combined_features.size()}")  # [32, 210, 4, 4]
 
         # Flatten the combined features to [batch_size, 3360]
         combined_features = combined_features.view(combined_features.size(0), -1)
-        print(f"Size after flattening: {combined_features.size()}")  # [32, 3360]
+        # print(f"Size after flattening: {combined_features.size()}")  # [32, 3360]
 
         # Pass the flattened features through the fusion layers
         output = self.fusion_layers(combined_features)
