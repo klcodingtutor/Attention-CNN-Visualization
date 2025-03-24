@@ -1,7 +1,7 @@
 import subprocess
 import sys
 
-# Run shell commands with real-time output
+# Run shell commands with real-time output in colab
 def run_command(command):
     process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     for line in process.stdout:

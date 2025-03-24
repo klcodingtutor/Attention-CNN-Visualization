@@ -19,7 +19,7 @@ mkdir -p "$DATA_FOLDER"
 mkdir -p "$MODEL_SAVE_PATH"
 
 # Run the training script
-python train_script.py \
+python multi_view_train_script.py \
     --data_folder "$DATA_FOLDER" \
     --num_classes "$NUM_CLASSES" \
     --img_size "$IMG_SIZE" \
