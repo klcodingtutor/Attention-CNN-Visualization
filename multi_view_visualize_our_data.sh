@@ -68,9 +68,6 @@ fi
 echo "Starting visualization script with the following parameters:"
 echo "python multi_view_visualize_our_data.py \\"
 echo "    --data_folder \"$DATA_FOLDER\" \\"
-# echo "    --csv_file \"$CSV_FILE\" \\"
-# echo "    --task \"$TASK\" \\"
-echo "    --num_classes $NUM_CLASSES \\"
 echo "    --img_size $IMG_SIZE \\"
 echo "    --dropout_rate $DROPOUT_RATE \\"
 echo "    --num_workers $NUM_WORKERS \\"
@@ -80,9 +77,6 @@ echo "    --model_save_path \"$MODEL_SAVE_PATH\""
 # Run the visualization script
 python multi_view_visualize_our_data.py \
     --data_folder "$DATA_FOLDER" \
-    # --csv_file "$CSV_FILE" \
-    # --task "$TASK" \
-    --num_classes "$NUM_CLASSES" \
     --img_size "$IMG_SIZE" \
     --dropout_rate "$DROPOUT_RATE" \
     --num_workers "$NUM_WORKERS" \
