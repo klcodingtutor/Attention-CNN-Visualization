@@ -3,6 +3,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 import torchvision.transforms as transforms
+import os
 
 # Step 1: Load the CSV and split into train and test sets
 df = pd.read_csv('face_images_path_with_meta_jpg_exist_only.csv')
