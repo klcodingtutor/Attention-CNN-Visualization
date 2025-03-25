@@ -138,25 +138,28 @@ for task in tasks:
     print(f"Sample test label value: {test_batch[1]}")
     print()
 
+# After creating dataloaders
 num_classes_list = []
-
-# get number of classes for each task
-for task in tasks:  # Use gender, age_10, disease for views
+for task in tasks:
     train_loader = dataloaders[f'train_{task}_loader']
     num_classes = len(train_loader.dataset.label_to_idx)
     num_classes_list.append(num_classes)
 
 print(f"Number of classes for each task: {num_classes_list}")
+disease_num_classes = len(dataloaders['train_disease_loader'].dataset.label_to_idx)
+print(f"Number of disease classes: {disease_num_classes}")
 
+# Instantiate the model with consistent parameters
 model = MultiViewAttentionCNN(
-    image_size=args.img_size,        # 32 from training script
-    image_depth=3,                   # RGB channels
-    num_classes_list=num_classes_list,  # Three tasks, all 10-class for CIFAR-10
-    drop_prob=args.dropout_rate,     # 0.5 from training script
+    image_size=args.img_size,
+    image_depth=3,
+    num_classes_list=num_classes_list,
+    drop_prob=args.dropout_rate,
     device=device,
-    num_classes_final=10
+    num_classes_final=disease_num_classes  # Match training
 )
 
+# Load the state dictionary
 model.load_state_dict(torch.load(args.model_save_path.rstrip('/') + '/multi_view_attention_cnn_face_tasks.pth'))
 model.to(device)
 model.eval()
