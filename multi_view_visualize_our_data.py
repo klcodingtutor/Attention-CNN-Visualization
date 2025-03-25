@@ -227,7 +227,7 @@ for row, key in enumerate(selected_keys):
         attended_c, _, _ = model.cnn_view_c(image)
         output = model(image, image, image)
     predicted_idx = torch.argmax(output).item()
-    predicted_label = idx_to_label[predicted_idx]  # Using disease mapping for final output
+    predicted_label = idx_to_label[predicted_idx]
 
     # Generate heatmaps
     heatmap_a = process_to_heatmap(attended_a, image)
