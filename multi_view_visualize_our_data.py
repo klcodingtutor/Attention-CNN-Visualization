@@ -11,6 +11,7 @@ from torch.optim import Adam
 from torchsummary import summary
 from runtime_args import args  # Import runtime arguments
 from attention_cnn import AttentionCNN, MultiViewAttentionCNN  # Import model classes
+import cv2
 
 # Set device based on training script logic
 device = torch.device("cuda:0" if torch.cuda.is_available() and args.device == 'gpu' else 'cpu')
