@@ -216,11 +216,6 @@ for row, key in enumerate(selected_keys):
     # Get the true label
     true_label = idx_to_label[label.item()]
 
-    # Optional: Pass to model
-    with torch.no_grad():
-        output = model(image)
-
-
 
 
 
