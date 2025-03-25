@@ -8,7 +8,7 @@ import numpy as np
 import os
 
 # Step 1: Load the CSV and split into train and test sets
-df = pd.read_csv('C:/Users/megah/Dropbox/Prompt/face_images_path_with_meta_jpg_exist_only.csv')
+df = pd.read_csv('face_images_path_with_meta_jpg_exist_only.csv')
 train_df = df[df['split'] == 'train']
 test_df = df[df['split'] == 'test']
 
