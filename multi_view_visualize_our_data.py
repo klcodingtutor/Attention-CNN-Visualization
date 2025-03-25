@@ -1,25 +1,53 @@
-import os
+import pandas as pd
 import torch
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 import numpy as np
-import cv2
+import os
 from tqdm import tqdm
-from attention_cnn import MultiViewAttentionCNN  # Your model class
-from runtime_args import args  # Runtime arguments from training
-import pandas as pd
+from torch.optim import Adam
+from torchsummary import summary
+from runtime_args import args  # Import runtime arguments
+from attention_cnn import AttentionCNN, MultiViewAttentionCNN  # Import model classes
 
-# Define CustomDataset
+# Step 1: Load the CSV and split into train and test sets
+df = pd.read_csv('./data/face_images_path_with_meta_jpg_exist_only.csv')
+train_df = df[df['split'] == 'train']
+test_df = df[df['split'] == 'test']
+
+# Step 2: Define image transformations
+train_transform = transforms.Compose([
+    transforms.Resize((32, 32)),
+    transforms.RandomHorizontalFlip(),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+])
+
+test_transform = transforms.Compose([
+    transforms.Resize((32, 32)),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+])
+
+# Step 3: Define a single parameterized Dataset class with internal mappings
 class CustomDataset(Dataset):
     def __init__(self, dataframe, task, image_folder, transform=None):
+        """
+        Parameters:
+            dataframe: pandas DataFrame with the data
+            task: str, one of 'gender', 'age_10', 'age_5', 'disease'
+            image_folder: str, path to the folder containing images
+            transform: torchvision transforms to apply to images
+        """
         self.dataframe = dataframe
         self.task = task
         self.transform = transform
         self.image_folder = image_folder
         
-        valid_tasks = ['gender', 'age_10', 'disease']
+        # Validate task parameter
+        valid_tasks = ['gender', 'age_10', 'age_5', 'disease']
         if task not in valid_tasks:
             raise ValueError(f"Task must be one of {valid_tasks}, got {task}")
 
@@ -44,91 +72,104 @@ class CustomDataset(Dataset):
         # Print number of classes for verification
         print(f"Task: {self.task}, Number of classes: {len(self.label_to_idx)}")
 
+        # Verify that image folder exists
+        if not os.path.exists(self.image_folder):
+            raise FileNotFoundError(f"Image folder not found: {self.image_folder}")
+
     def __len__(self):
         return len(self.dataframe)
 
     def __getitem__(self, idx):
+        # Construct image path
         img_filename = self.dataframe.iloc[idx]['dest_filename']
         img_path = os.path.join(self.image_folder, img_filename)
+        
+        # Check if file exists
         if not os.path.exists(img_path):
             raise FileNotFoundError(f"Image not found at: {img_path}")
+
+        # Load image
         image = Image.open(img_path).convert('RGB')
         if self.transform:
             image = self.transform(image)
+
+        # Get label using the internal mapping
         label = self.label_to_idx[self.dataframe.iloc[idx][self.label_col]]
+
         return image, label
 
-# Set device
-device = torch.device("cuda:0" if torch.cuda.is_available() and args.device == 'gpu' else 'cpu')
-
-# Load trained model
-tasks = ['gender', 'age_10', 'disease']
-num_classes_list = []
-model_path = os.path.join(args.model_save_path, 'multi_view_attention_cnn_face_tasks.pth')
-image_size = 32
-
-# Define test transform
-test_transform = transforms.Compose([
-    transforms.Resize((image_size, image_size)),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-])
-
-# Load CSV and create dataloaders
-df = pd.read_csv('./data/face_images_path_with_meta_jpg_exist_only.csv')
-train_df = df[df['split'] == 'train']
+# Step 4: Create Datasets and DataLoaders using the parameterized class
+tasks = ['gender', 'age_10', 'disease']  # Primary tasks, keeping 'age_5' as an option
 image_folder = './data'
 
-dataloaders = {}
-for task in tasks:
-    dataset = CustomDataset(train_df, task=task, image_folder=image_folder, transform=test_transform)
-    num_classes_list.append(len(dataset.label_to_idx))
-    loader = DataLoader(dataset, batch_size=1, shuffle=False, num_workers=args.num_workers)
-    dataloaders[f'train_{task}_loader'] = loader
+# Ensure the image folder exists
+if not os.path.exists(image_folder):
+    raise FileNotFoundError(f"Specified image folder does not exist: {image_folder}")
 
-# Instantiate and load model
-disease_num_classes = num_classes_list[2]  # 'disease' is final output
+dataloaders = {}
+
+for task in tasks:
+    # Create train and test datasets
+    train_dataset = CustomDataset(train_df, task=task, image_folder=image_folder, transform=train_transform)
+    test_dataset = CustomDataset(test_df, task=task, image_folder=image_folder, transform=test_transform)
+    
+    # Create train and test DataLoaders
+    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
+    test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
+    
+    # Store in dictionary
+    dataloaders[f'train_{task}_loader'] = train_loader
+    dataloaders[f'test_{task}_loader'] = test_loader
+
+# Step 5: Verify the DataLoaders by iterating and printing sizes
+for task in tasks:
+    train_key = f'train_{task}_loader'
+    test_key = f'test_{task}_loader'
+    print(f"{train_key} size: {len(dataloaders[train_key].dataset)}")
+    print(f"{test_key} size: {len(dataloaders[test_key].dataset)}")
+    train_batch = next(iter(dataloaders[train_key]))
+    test_batch = next(iter(dataloaders[test_key]))
+    print(f"Sample train image shape: {train_batch[0].shape}")
+    print(f"Sample train label value: {train_batch[1]}")
+    print(f"Sample test image shape: {test_batch[0].shape}")
+    print(f"Sample test label value: {test_batch[1]}")
+    print()
+
+# get number of classes for each task
+num_classes_list = [len(dataloaders[f'train_{task}_loader'].dataset.label_to_idx) for task in tasks]
+print(f"Number of classes for each task: {num_classes_list}")
+
 model = MultiViewAttentionCNN(
-    image_size=image_size,
-    image_depth=3,
-    num_classes_list=num_classes_list,
-    drop_prob=args.dropout_rate,
+    image_size=args.img_size,        # 32 from training script
+    image_depth=3,                   # RGB channels
+    num_classes_list=num_classes_list,  # Three tasks, all 10-class for CIFAR-10
+    drop_prob=args.dropout_rate,     # 0.5 from training script
     device=device,
-    num_classes_final=disease_num_classes
+    num_classes_final=10
 )
-model.load_state_dict(torch.load(model_path))
+
+model.load_state_dict(torch.load(args.model_save_path))
 model.to(device)
 model.eval()
 
-# Fixed denormalization function
-def denormalize(image, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]):
-    """
-    Denormalize a tensor image with shape (B, C, H, W) or (C, H, W).
-    Returns the denormalized image with the same shape.
-    """
+# Define denormalization function with training-specific mean and std
+def denormalize(image, mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010]):
     img = image.clone()
-    # Ensure image has batch dimension
-    if img.dim() == 3:  # (C, H, W)
-        img = img.unsqueeze(0)  # Add batch dim -> (1, C, H, W)
-    elif img.dim() != 4:
-        raise ValueError(f"Expected image tensor with 3 or 4 dims, got {img.dim()} dims with shape {img.shape}")
-    
-    # Check number of channels
-    channels = img.size(1)
-    if channels != 3:
-        raise ValueError(f"Expected 3 channels, got {channels}")
-    
-    # Denormalize each channel
-    for c in range(channels):
-        img[:, c, :, :] = img[:, c, :, :] * std[c] + mean[c]
-    return img.squeeze(0) if image.dim() == 3 else img  # Remove batch dim if input was (C, H, W)
+    for i in range(3):
+        img[:, i, :, :] = img[:, i, :, :] * std[i] + mean[i]
+    return img
 
-# Process attention filters into heatmap
+
+# Function to process attention filters into a heatmap
 def process_to_heatmap(attended_filters, input_img):
+    # Combine attention filters by taking max across channels
     attended_combined = torch.max(attended_filters.squeeze(0), 0)[0].detach().cpu().numpy()
-    attended_combined = cv2.resize(attended_combined, (input_img.size(2), input_img.size(3)))
-    input_img_np = denormalize(input_img).squeeze(0).permute(1, 2, 0).cpu().numpy()  # Remove batch dim here
+    # Resize to match input image dimensions (32x32)
+    attended_combined = cv2.resize(attended_combined, (input_img.size(3), input_img.size(2)))
+    # Denormalize input image for overlay
+    input_img_np = denormalize(input_img).squeeze(0).permute(1, 2, 0).cpu().numpy()
     input_img_np = np.clip(input_img_np, 0, 1)
+    # Overlay attention on green channel (simplified approach)
     heatmap = cv2.addWeighted(
         input_img_np[:, :, 1].astype(np.float32), 0.97,
         attended_combined.astype(np.float32), 0.07, 0
@@ -168,6 +209,7 @@ for row, key in enumerate(selected_keys):
     heatmap_a = process_to_heatmap(attended_a, image)
     heatmap_b = process_to_heatmap(attended_b, image)
     heatmap_c = process_to_heatmap(attended_c, image)
+    
     # save the heatmaps
     cv2.imwrite(os.path.join("output", f'heatmap_{task}_a.png'), heatmap_a)
     cv2.imwrite(os.path.join("output", f'heatmap_{task}_b.png'), heatmap_b)
@@ -183,22 +225,19 @@ for row, key in enumerate(selected_keys):
     heatmap_c_resized = resize_image(heatmap_c)
 
     # Plot
-    axes[row, 0].imshow(input_img_resized)
-    axes[row, 0].set_title(f"Input (Task: {task})")
-    axes[row, 0].axis('off')
-    axes[row, 1].imshow(heatmap_a_resized)
-    axes[row, 1].set_title("View A Heatmap")
-    axes[row, 1].axis('off')
-    axes[row, 2].imshow(heatmap_b_resized)
-    axes[row, 2].set_title("View B Heatmap")
-    axes[row, 2].axis('off')
-    axes[row, 3].imshow(heatmap_c_resized)
-    axes[row, 3].set_title("View C Heatmap")
-    axes[row, 3].axis('off')
-    axes[row, 0].text(0.5, -0.1, f"True: {true_label}, Pred: {predicted_label}", 
-                      transform=axes[row, 0].transAxes, ha='center')
-
-plt.tight_layout()
-plt.show()
-# save the plot
-plt.savefig(os.path.join("output", 'multi_view_attention_cnn_heatmaps.png'))
+    fig, axes = plt.subplots(1, 4, figsize=(20, 5))
+    axes[0].imshow(input_img_resized)
+    axes[0].set_title("Input Image")
+    axes[0].axis('off')
+    axes[1].imshow(heatmap_a_resized)
+    axes[1].set_title("View A Attention Heatmap")
+    axes[1].axis('off')
+    axes[2].imshow(heatmap_b_resized)
+    axes[2].set_title("View B Attention Heatmap")
+    axes[2].axis('off')
+    axes[3].imshow(heatmap_c_resized)
+    axes[3].set_title("View C Attention Heatmap")
+    axes[3].axis('off')
+    fig.suptitle(f"Predicted: {predicted_class} (Label: {class_names[label.item()]})")
+    plt.savefig(os.path.join(output_folder, f"test_image_1.png"))
+    plt.close()
