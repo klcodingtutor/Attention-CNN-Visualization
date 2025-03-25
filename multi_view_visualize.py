@@ -20,7 +20,7 @@ model = MultiViewAttentionCNN(
     drop_prob=args.dropout_rate,     # 0.5 from training script
     device=device
 )
-model_path = os.path.join(args.model_save_path, 'attention_cnn.pth')
+model_path = os.path.join(args.model_save_path, 'multi_view_attention_cnn_cifar10')
 model.load_state_dict(torch.load(model_path))
 model.to(device)
 model.eval()
