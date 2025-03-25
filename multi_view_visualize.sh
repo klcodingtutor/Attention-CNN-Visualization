@@ -26,7 +26,7 @@ if [ ! -f "$MODEL_FILE" ]; then
 fi
 
 # Run the visualization script
-python visualize_multi_view.py \
+python multi_view_visualize.py \
     --data_folder "$DATA_FOLDER" \
     --num_classes "$NUM_CLASSES" \
     --img_size "$IMG_SIZE" \
