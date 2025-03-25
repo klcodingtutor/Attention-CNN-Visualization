@@ -4,8 +4,8 @@
 
 # Parameters
 DATA_FOLDER="./data"  # Directory containing face images
-CSV_FILE="./data/face_images_path_with_meta_jpg_exist_only.csv"  # CSV with metadata
-TASK="gender"                 # Task to visualize: 'gender', 'age_10', 'age_5', or 'disease'
+# CSV_FILE="./data/face_images_path_with_meta_jpg_exist_only.csv"  # CSV with metadata
+# TASK="gender"                 # Task to visualize: 'gender', 'age_10', 'age_5', or 'disease'
 NUM_CLASSES=""                # Number of classes (set dynamically based on TASK)
 IMG_SIZE=32                  # Image size after resizing (from your transforms)
 DROPOUT_RATE=0.5              # Dropout rate (assumed from your model)
@@ -68,8 +68,8 @@ fi
 echo "Starting visualization script with the following parameters:"
 echo "python multi_view_visualize.py \\"
 echo "    --data_folder \"$DATA_FOLDER\" \\"
-echo "    --csv_file \"$CSV_FILE\" \\"
-echo "    --task \"$TASK\" \\"
+# echo "    --csv_file \"$CSV_FILE\" \\"
+# echo "    --task \"$TASK\" \\"
 echo "    --num_classes $NUM_CLASSES \\"
 echo "    --img_size $IMG_SIZE \\"
 echo "    --dropout_rate $DROPOUT_RATE \\"
@@ -80,8 +80,8 @@ echo "    --model_save_path \"$MODEL_SAVE_PATH\""
 # Run the visualization script
 python multi_view_visualize.py \
     --data_folder "$DATA_FOLDER" \
-    --csv_file "$CSV_FILE" \
-    --task "$TASK" \
+    # --csv_file "$CSV_FILE" \
+    # --task "$TASK" \
     --num_classes "$NUM_CLASSES" \
     --img_size "$IMG_SIZE" \
     --dropout_rate "$DROPOUT_RATE" \
