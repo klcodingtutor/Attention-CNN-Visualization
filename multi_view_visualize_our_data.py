@@ -195,3 +195,5 @@ for row, key in enumerate(selected_keys):
 
 plt.tight_layout()
 plt.show()
+# save the plot
+plt.savefig(os.path.join("output", 'multi_view_attention_cnn_heatmaps.png'))
