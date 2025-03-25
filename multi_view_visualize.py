@@ -12,14 +12,15 @@ from runtime_args import args  # Assuming this handles runtime arguments as in t
 # Set device based on training script logic
 device = torch.device("cuda:0" if torch.cuda.is_available() and args.device == 'gpu' else 'cpu')
 
-# Load the trained model
 model = MultiViewAttentionCNN(
     image_size=args.img_size,        # 32 from training script
     image_depth=3,                   # RGB channels
-    num_classes=args.num_classes,    # 10 from training script
+    num_classes_list=[10, 10, 10],  # Three tasks, all 10-class for CIFAR-10
     drop_prob=args.dropout_rate,     # 0.5 from training script
-    device=device
+    device=device,
+    num_classes_final=10
 )
+
 model_path = os.path.join(args.model_save_path, 'multi_view_attention_cnn_cifar10.pth')
 model.load_state_dict(torch.load(model_path))
 model.to(device)
