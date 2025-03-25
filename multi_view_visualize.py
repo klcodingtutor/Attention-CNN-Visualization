@@ -79,8 +79,10 @@ class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', '
 output_folder = './output'
 os.makedirs(output_folder, exist_ok=True)
 
-# Visualization loop
+# Visualization loop with sampling every 20th image
 for i, (image, label) in enumerate(tqdm(test_loader, desc="Visualizing")):
+    if i % 20 != 0:
+        continue
     image = image.to(device)
 
     # Get attention filters from each view
