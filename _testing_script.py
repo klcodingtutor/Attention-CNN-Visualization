@@ -5,7 +5,7 @@ from PIL import Image
 import torchvision.transforms as transforms
 
 # Step 1: Load the CSV and split into train and test sets
-df = pd.read_csv('C:/Users/megah/Dropbox/Prompt/face_images_path_with_meta_jpg_exist_only.csv')
+df = pd.read_csv('face_images_path_with_meta_jpg_exist_only.csv')
 train_df = df[df['split'] == 'train']
 test_df = df[df['split'] == 'test']
 
@@ -109,4 +109,3 @@ for task in tasks:
     print(f"Sample test image shape: {next(iter(dataloaders[test_key]))[0].shape}")
     print(f"Sample test label value: {next(iter(dataloaders[test_key]))[1]}")
     print()
-
