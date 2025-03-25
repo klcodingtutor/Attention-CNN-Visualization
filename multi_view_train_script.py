@@ -70,7 +70,8 @@ model = MultiViewAttentionCNN(
     image_depth=3, 
     num_classes_list=[10, 10, 10],  # Three tasks, all 10-class for CIFAR-10
     drop_prob=args.dropout_rate, 
-    device=device
+    device=device,
+    num_classes_final=10
 )
 model = model.to(device)
 

@@ -117,7 +117,7 @@ class AttentionCNN(nn.Module):
 class MultiViewAttentionCNN(nn.Module):
     '''A multi-view CNN architecture with attention mechanism for three parallel image inputs, each for a different classification task.'''
 
-    def __init__(self, image_size, image_depth, num_classes_list, drop_prob, device):
+    def __init__(self, image_size, image_depth, num_classes_list,num_classes_final=None, drop_prob, device):
         '''Initialize the multi-view model with three AttentionCNN submodules, each for a different task.'''
 
         super(MultiViewAttentionCNN, self).__init__()
@@ -158,7 +158,7 @@ class MultiViewAttentionCNN(nn.Module):
         if isinstance(m, nn.Linear):
             torch.nn.init.xavier_uniform_(m.weight)
             m.bias.data.fill_(0.01)
-            
+
 
     def forward(self, view_a, view_b, view_c, return_individual_outputs=False, return_attention_features=False):
         # Process each view through its respective AttentionCNN
