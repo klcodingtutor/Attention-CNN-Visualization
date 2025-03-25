@@ -66,7 +66,7 @@ if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
 fi
 
 echo "Starting visualization script with the following parameters:"
-echo "python multi_view_visualize.py \\"
+echo "python multi_view_visualize_our_data.py \\"
 echo "    --data_folder \"$DATA_FOLDER\" \\"
 # echo "    --csv_file \"$CSV_FILE\" \\"
 # echo "    --task \"$TASK\" \\"
@@ -78,7 +78,7 @@ echo "    --device \"$DEVICE\" \\"
 echo "    --model_save_path \"$MODEL_SAVE_PATH\""
 
 # Run the visualization script
-python multi_view_visualize.py \
+python multi_view_visualize_our_data.py \
     --data_folder "$DATA_FOLDER" \
     # --csv_file "$CSV_FILE" \
     # --task "$TASK" \
