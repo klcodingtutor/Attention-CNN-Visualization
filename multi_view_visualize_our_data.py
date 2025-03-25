@@ -127,7 +127,7 @@ def denormalize(image, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]):
 def process_to_heatmap(attended_filters, input_img):
     attended_combined = torch.max(attended_filters.squeeze(0), 0)[0].detach().cpu().numpy()
     attended_combined = cv2.resize(attended_combined, (input_img.size(2), input_img.size(3)))
-    input_img_np = denormalize(input_img).permute(1, 2, 0).cpu().numpy()  # Remove batch dim here
+    input_img_np = denormalize(input_img).squeeze(0).permute(1, 2, 0).cpu().numpy()  # Remove batch dim here
     input_img_np = np.clip(input_img_np, 0, 1)
     heatmap = cv2.addWeighted(
         input_img_np[:, :, 1].astype(np.float32), 0.97,
