@@ -19,7 +19,7 @@ if [ ! -d "$MODEL_SAVE_PATH" ]; then
 fi
 
 # Check if the trained model exists
-MODEL_FILE="$MODEL_SAVE_PATH/multi_view_attention_cnn.pth"
+MODEL_FILE="$MODEL_SAVE_PATH/multi_view_attention_cnn_cifar10.pth"
 if [ ! -f "$MODEL_FILE" ]; then
     echo "Trained model file $MODEL_FILE not found! Please train the model first."
     exit 1
