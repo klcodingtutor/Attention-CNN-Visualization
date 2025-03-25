@@ -151,7 +151,7 @@ model = MultiViewAttentionCNN(
     num_classes_final=10
 )
 
-model.load_state_dict(torch.load(args.model_save_path))
+model.load_state_dictargs.model_save_path.rstrip('/') + '/multi_view_attention_cnn_face_tasks.pth')
 model.to(device)
 model.eval()
 
