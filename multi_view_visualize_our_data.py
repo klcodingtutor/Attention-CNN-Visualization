@@ -227,6 +227,9 @@ for row, key in enumerate(selected_keys):
         attended_c, _, _ = model.cnn_view_c(image)
         output = model(image, image, image)
     predicted_idx = torch.argmax(output).item()
+    print(f"Predicted index: {predicted_idx}")
+    # print the mappng table
+    print(f"idx_to_label: {idx_to_label}")
     # predicted_label = idx_to_label[predicted_idx]
 
     # Generate heatmaps
@@ -234,10 +237,6 @@ for row, key in enumerate(selected_keys):
     heatmap_b = process_to_heatmap(attended_b, image)
     heatmap_c = process_to_heatmap(attended_c, image)
     
-    # save the heatmaps
-    cv2.imwrite(os.path.join("output", f'heatmap_{task}_a.png'), heatmap_a)
-    cv2.imwrite(os.path.join("output", f'heatmap_{task}_b.png'), heatmap_b)
-    cv2.imwrite(os.path.join("output", f'heatmap_{task}_c.png'), heatmap_c)
     
     input_img = denormalize(image).squeeze(0).permute(1, 2, 0).cpu().numpy()
     input_img = np.clip(input_img, 0, 1)
