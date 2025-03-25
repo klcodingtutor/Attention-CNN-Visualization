@@ -25,6 +25,17 @@ if [ ! -f "$MODEL_FILE" ]; then
     exit 1
 fi
 
+
+echo "Starting visualization script with the following parameters:"
+echo "python multi_view_visualize.py \\
+    --data_folder $DATA_FOLDER \\
+    --num_classes $NUM_CLASSES \\
+    --img_size $IMG_SIZE \\
+    --dropout_rate $DROPOUT_RATE \\
+    --num_workers $NUM_WORKERS \\
+    --device $DEVICE \\
+    --model_save_path $MODEL_SAVE_PATH"
+
 # Run the visualization script
 python multi_view_visualize.py \
     --data_folder "$DATA_FOLDER" \
@@ -36,3 +47,4 @@ python multi_view_visualize.py \
     --model_save_path "$MODEL_SAVE_PATH"
 
 echo "Visualization completed!"
+

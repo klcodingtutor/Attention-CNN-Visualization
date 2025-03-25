@@ -18,6 +18,20 @@ MODEL_SAVE_PATH="./models"
 mkdir -p "$DATA_FOLDER"
 mkdir -p "$MODEL_SAVE_PATH"
 
+echo "Starting Training script with the following parameters:"
+echo "python multi_view_train_script.py \\
+    --data_folder $DATA_FOLDER \\
+    --num_classes $NUM_CLASSES \\
+    --img_size $IMG_SIZE \\
+    --batch_size $BATCH_SIZE \\
+    --learning_rate $LEARNING_RATE \\
+    --epoch $EPOCHS \\
+    --dropout_rate $DROPOUT_RATE \\
+    --num_workers $NUM_WORKERS \\
+    --device $DEVICE \\
+    --model_save_path $MODEL_SAVE_PATH"
+
+
 # Run the training script
 python multi_view_train_script.py \
     --data_folder "$DATA_FOLDER" \
