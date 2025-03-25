@@ -23,14 +23,14 @@ test_df = df[df['split'] == 'test']
 
 # Step 2: Define image transformations
 train_transform = transforms.Compose([
-    transforms.Resize((32, 32)),
+    transforms.Resize((64, 64)),
     transforms.RandomHorizontalFlip(),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
 test_transform = transforms.Compose([
-    transforms.Resize((32, 32)),
+    transforms.Resize((64, 64)),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])

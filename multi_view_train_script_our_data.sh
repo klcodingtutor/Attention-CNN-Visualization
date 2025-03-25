@@ -4,7 +4,7 @@
 
 # Parameters
 DATA_FOLDER="./data"          # Directory containing face images and CSV
-IMG_SIZE=32                  # Face images are resized to 224x224
+IMG_SIZE=64                  # Face images are resized to 224x224
 BATCH_SIZE=32
 LEARNING_RATE=0.001
 EPOCHS=80                     # Will be divided by 4 for multi-stage training

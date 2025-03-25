@@ -19,14 +19,14 @@ test_df = df[df['split'] == 'test']
 
 # Step 2: Define image transformations
 train_transform = transforms.Compose([
-    transforms.Resize((32, 32)),
+    transforms.Resize((64, 64)),
     transforms.RandomHorizontalFlip(),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
 test_transform = transforms.Compose([
-    transforms.Resize((32, 32)),
+    transforms.Resize((64, 64)),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
@@ -205,7 +205,7 @@ print(f"Number of classes for final output (disease): {disease_num_classes}")
 
 # Instantiate the MultiViewAttentionCNN model
 model = MultiViewAttentionCNN(
-    image_size=32,  # Adjusted for face images
+    image_size=64,  # Adjusted for face images
     image_depth=3,
     num_classes_list=num_classes_list,  # Classes for gender, age_10, disease
     drop_prob=args.dropout_rate,
@@ -219,10 +219,10 @@ criterion_views = torch.nn.CrossEntropyLoss()  # For individual views
 criterion_final = torch.nn.CrossEntropyLoss()  # For fused output
 
 # Print model summary (for one view as example)
-summary(model.cnn_view_a, (3, 32, 32))
+summary(model.cnn_view_a, (3, 64, 64))
 
 # Print model summary (for entire model)
-summary(model, [(3, 32, 32), (3, 32, 32), (3, 32, 32)])
+summary(model, [(3, 64, 64), (3, 64, 64), (3, 64, 64)])
 
 # Modified training functions to handle multiple tasks
 def train_single_view(submodel, dataloader, optimizer, criterion, device, num_epochs, task_idx, is_train=True):
