@@ -228,9 +228,10 @@ for row, key in enumerate(selected_keys):
         output = model(image, image, image)
     predicted_idx = torch.argmax(output).item()
     print(f"Predicted index: {predicted_idx}")
-    # print the mappng table
     print(f"idx_to_label: {idx_to_label}")
-    # predicted_label = idx_to_label[predicted_idx]
+    predicted_label = idx_to_label[predicted_idx]
+    print(f"Predicted label: {predicted_label}")
+    print(f"True label: {true_label}")
 
     # Generate heatmaps
     heatmap_a = process_to_heatmap(attended_a, image)
