@@ -115,51 +115,30 @@ class AttentionCNN(nn.Module):
 # Assuming AttentionCNN is already defined as in your previous code
 
 class MultiViewAttentionCNN(nn.Module):
-    '''A multi-view CNN architecture with attention mechanism for three parallel image inputs.'''
+    '''A multi-view CNN architecture with attention mechanism for three parallel image inputs, each for a different classification task.'''
 
-    def __init__(self, image_size, image_depth, num_classes, drop_prob, device):
-        '''Initialize the multi-view model with three AttentionCNN submodules.'''
+    def __init__(self, image_size, image_depth, num_classes_list, drop_prob, device):
+        '''Initialize the multi-view model with three AttentionCNN submodules, each for a different task.'''
 
         super(MultiViewAttentionCNN, self).__init__()
+
+        # Ensure num_classes_list has three elements
+        assert len(num_classes_list) == 3, "num_classes_list should have three elements"
 
         # Store parameters
         self.image_size = image_size
         self.image_depth = image_depth
-        self.num_classes = num_classes
+        self.num_classes_list = num_classes_list
         self.drop_prob = drop_prob
         self.device = device
 
-        # Instantiate three AttentionCNN submodules, one for each view
-        self.cnn_view_a = AttentionCNN(image_size, image_depth, num_classes, drop_prob, device)
-        self.cnn_view_b = AttentionCNN(image_size, image_depth, num_classes, drop_prob, device)
-        self.cnn_view_c = AttentionCNN(image_size, image_depth, num_classes, drop_prob, device)
+        # Instantiate three AttentionCNN submodules, each with its own num_classes
+        self.cnn_view_a = AttentionCNN(image_size, image_depth, num_classes_list[0], drop_prob, device)
+        self.cnn_view_b = AttentionCNN(image_size, image_depth, num_classes_list[1], drop_prob, device)
+        self.cnn_view_c = AttentionCNN(image_size, image_depth, num_classes_list[2], drop_prob, device)
 
-        # Calculate the combined feature vector size (3 views * feature_vector_size from one AttentionCNN)
-        single_feature_size = self.cnn_view_a.feature_vector_size
-        self.combined_feature_size = 3 * single_feature_size
-
-        # Define fusion layers to process the concatenated features
-        self.fusion_layers = nn.Sequential(
-            nn.Linear(self.combined_feature_size, 512),  # Reduce dimensionality and fuse features
-            nn.ReLU(inplace=True),
-            nn.Dropout(p=self.drop_prob),
-            nn.Linear(512, num_classes)  # Final classification layer
-        )
-
-        # Initialize weights for the fusion layers
-        self.fusion_layers.apply(self.init_weights)
-
-    def init_weights(self, m):
-        '''Initialize weights for linear layers using Xavier initialization.'''
-        if type(m) == nn.Linear:
-            torch.nn.init.xavier_uniform_(m.weight)
-            m.bias.data.fill_(0.01)
-
-    def forward(self, view_a, view_b, view_c):
-        '''Perform forward propagation for three parallel image inputs.'''
-
+    def forward(self, view_a, view_b, view_c, return_individual_outputs=False, return_attention_features=False):
         # Process each view through its respective AttentionCNN
-        
         features_a_reshaped_filters, features_a_x, features_a_output = self.cnn_view_a(view_a)  # Extract feature vector
         features_b_reshaped_filters, features_b_x, features_b_output = self.cnn_view_b(view_b)
         features_c_reshaped_filters, features_c_x, features_c_output = self.cnn_view_c(view_c)
@@ -175,18 +154,21 @@ class MultiViewAttentionCNN(nn.Module):
         # print(f"Size of features_c_output           : {features_c_output.size()}")
 
 
-        # Concatenate the attended features from all views along the feature dimension
-        combined_features = torch.cat((features_a_reshaped_filters, features_b_reshaped_filters, features_c_reshaped_filters), dim=1)
-        # print(f"Size of combined features: {combined_features.size()}")  # [32, 210, 4, 4]
-
-        # Flatten the combined features to [batch_size, 3360]
-        combined_features = combined_features.view(combined_features.size(0), -1)
-        # print(f"Size after flattening: {combined_features.size()}")  # [32, 3360]
-
-        # Pass the flattened features through the fusion layers
-        output = self.fusion_layers(combined_features)
-        
-        return output
+        if return_individual_outputs:
+            if return_attention_features:
+                return features_a_output, features_b_output, features_c_output, features_a_reshaped_filters, features_b_reshaped_filters, features_c_reshaped_filters
+            else:
+                return features_a_output, features_b_output, features_c_output
+        else:
+            # Concatenate attended features for fusion
+            combined_features = torch.cat((features_a_reshaped_filters, features_b_reshaped_filters, features_c_reshaped_filters), dim=1)
+            combined_features = combined_features.view(combined_features.size(0), -1)
+            fused_output = self.fusion_layers(combined_features)
+            if return_attention_features:
+                return fused_output, features_a_reshaped_filters, features_b_reshaped_filters, features_c_reshaped_filters
+            else:
+                return fused_output
+                
 
     def calculate_accuracy(self, predicted, target):
         '''Calculate the accuracy of the model's predictions.'''

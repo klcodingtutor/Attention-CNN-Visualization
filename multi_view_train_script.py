@@ -21,7 +21,6 @@ device = torch.device("cuda:0" if torch.cuda.is_available() and args.device == '
 train_transform = transforms.Compose([
     transforms.Resize([128, 128]),
     transforms.RandomHorizontalFlip(),
-    # transforms.RandomCrop(32, padding=4),
     transforms.RandomRotation(15),
     transforms.ToTensor(),
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
@@ -59,14 +58,20 @@ test_generator = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=Fa
 try:
     train_iter = iter(train_generator)
     images, labels = next(train_iter)
-    print(f"Sample batch shape: {images.shape} (expected: [{args.batch_size}, 3, 32, 32])")
+    print(f"Sample batch shape: {images.shape} (expected: [{args.batch_size}, 3, 128, 128])")
     print(f"Sample label shape: {labels.shape} (expected: [{args.batch_size}])")
 except StopIteration:
     raise ValueError("Training DataLoader is empty. Check dataset loading.")
 
 # Instantiate the MultiViewAttentionCNN model
-model = MultiViewAttentionCNN(image_size=args.img_size, image_depth=3, num_classes=args.num_classes, 
-                              drop_prob=args.dropout_rate, device=device)
+# Using num_classes_list=[10, 10, 10] since all views target CIFAR-10's 10 classes
+model = MultiViewAttentionCNN(
+    image_size=args.img_size, 
+    image_depth=3, 
+    num_classes_list=[10, 10, 10],  # Three tasks, all 10-class for CIFAR-10
+    drop_prob=args.dropout_rate, 
+    device=device
+)
 model = model.to(device)
 
 # Define the loss function
@@ -75,7 +80,7 @@ criterion = torch.nn.CrossEntropyLoss()
 # Print model summary (for one view)
 summary(model.cnn_view_a, (3, args.img_size, args.img_size))
 
-# Print model summary (for Entire model)
+# Print model summary (for entire model)
 summary(model, [(3, args.img_size, args.img_size), (3, args.img_size, args.img_size), (3, args.img_size, args.img_size)])
 
 def train_single_view(submodel, dataloader, optimizer, criterion, device, num_epochs, is_train=True):
@@ -90,6 +95,7 @@ def train_single_view(submodel, dataloader, optimizer, criterion, device, num_ep
         if is_train:
             optimizer.zero_grad()
         with torch.set_grad_enabled(is_train):
+            # Call submodel directly since we want its individual output
             _, _, net_output = submodel(images)
             total_loss = criterion(net_output, labels)
             if is_train:
@@ -112,12 +118,13 @@ def train_multi_view(model, dataloader, optimizer, criterion, device, num_epochs
     epoch_accuracy = []
     for i, (images, labels) in tqdm(enumerate(dataloader), total=len(dataloader)):
         images, labels = images.to(device), labels.to(device)
-        view_a, view_b, view_c = images, images, images
+        view_a, view_b, view_c = images, images, images  # Same image for all views as per CIFAR-10 setup
         
         if is_train:
             optimizer.zero_grad()
         with torch.set_grad_enabled(is_train):
-            net_output = model(view_a, view_b, view_c)
+            # Default call uses fusion layers
+            net_output = model(view_a, view_b, view_c, return_individual_outputs=False)
             total_loss = criterion(net_output, labels)
             if is_train:
                 total_loss.backward()
