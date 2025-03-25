@@ -13,7 +13,7 @@ def download_and_validate_cifar10(data_root="./cifar10_data", batch_size=4, num_
 
     # Define basic transform (no augmentation, just tensor conversion for validation)
     transform = transforms.Compose([
-        transforms.Resize([224, 224]),
+        transforms.Resize([64, 64]),
         transforms.ToTensor()
     ])
 
@@ -73,3 +73,17 @@ if __name__ == "__main__":
         download_and_validate_cifar10(data_root, batch_size, num_workers)
     except Exception as e:
         print(f"Error occurred: {str(e)}")
+
+
+
+
+        
+
+
+
+
+
+
+
+
+

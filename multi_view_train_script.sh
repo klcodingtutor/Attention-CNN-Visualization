@@ -5,7 +5,7 @@
 # Parameters
 DATA_FOLDER="./cifar10_data"  # Directory to store CIFAR-10 data
 NUM_CLASSES=10                # CIFAR-10 has 10 classes
-IMG_SIZE=224                   # CIFAR-10 images are 32x32
+IMG_SIZE=64                   # CIFAR-10 images are 32x32
 BATCH_SIZE=32
 LEARNING_RATE=0.001
 EPOCHS=20                     # will div by 4 for multi-stage
