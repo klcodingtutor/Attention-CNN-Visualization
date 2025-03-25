@@ -99,7 +99,7 @@ class CustomDataset(Dataset):
         return image, label
 
 # Step 4: Create Datasets and DataLoaders using the parameterized class
-tasks = ['gender', 'age_10', 'age_5', 'disease']
+tasks = ['gender', 'age_10', 'disease']  # Primary tasks, keeping 'age_5' as an option
 image_folder = './data'
 
 # Ensure the image folder exists
@@ -143,10 +143,10 @@ def denormalize(image, mean, std):
         image[c] = image[c] * std[c] + mean[c]
     return image
 
-# Select three dataloaders
-selected_keys = ['train_gender_loader', 'train_age_10_loader', 'train_age_5_loader']
+# Select three dataloaders for visualization (gender, age_10, disease)
+selected_keys = ['train_gender_loader', 'train_age_10_loader', 'train_disease_loader']
 selected_loaders = [dataloaders[key] for key in selected_keys]
-tasks_display = [key.split('_')[1] for key in selected_keys]  # ['gender', 'age_10', 'age_5']
+tasks_display = [key.split('_')[1] for key in selected_keys]  # ['gender', 'age_10', 'disease']
 
 # Normalization parameters (same as used in transforms)
 mean = [0.485, 0.456, 0.406]
@@ -193,7 +193,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() and args.device == '
 
 # Determine the number of classes for each task
 num_classes_list = []
-for task in tasks[:-1]:  # Use first three tasks for views (gender, age_10, age_5)
+for task in tasks:  # Use gender, age_10, disease for views
     train_loader = dataloaders[f'train_{task}_loader']
     num_classes = len(train_loader.dataset.label_to_idx)
     num_classes_list.append(num_classes)
@@ -207,7 +207,7 @@ print(f"Number of classes for final output (disease): {disease_num_classes}")
 model = MultiViewAttentionCNN(
     image_size=32,  # Adjusted for face images
     image_depth=3,
-    num_classes_list=num_classes_list,  # Classes for gender, age_10, age_5
+    num_classes_list=num_classes_list,  # Classes for gender, age_10, disease
     drop_prob=args.dropout_rate,
     device=device,
     num_classes_final=disease_num_classes  # Final output for disease
@@ -283,8 +283,8 @@ def train_multi_view(model, dataloader, optimizer, criterion, device, num_epochs
 num_epochs_per_stage = args.epoch // 4
 best_accuracy = 0
 
-# Stage 1: Train View A (Gender)
-print("Stage 1: Training View A (Gender)")
+# Stage 1: Train View A on Gender (Freeze B and C)
+print("Stage 1: Training View A on Gender (Freeze B and C)")
 optimizer_a = Adam(model.cnn_view_a.parameters(), lr=args.learning_rate)
 for param in model.cnn_view_b.parameters():
     param.requires_grad = False
@@ -303,8 +303,8 @@ for epoch_idx in range(num_epochs_per_stage):
     print(f"Testing Loss: {test_loss:.4f}, Testing Accuracy: {test_acc:.2f}%")
     print('------------------------------------------------------------------------------')
 
-# Stage 2: Train View B (Age_10)
-print("Stage 2: Training View B (Age_10)")
+# Stage 2: Train View B on Age_10 (Freeze A and C)
+print("Stage 2: Training View B on Age_10 (Freeze A and C)")
 optimizer_b = Adam(model.cnn_view_b.parameters(), lr=args.learning_rate)
 for param in model.cnn_view_a.parameters():
     param.requires_grad = False
@@ -325,8 +325,8 @@ for epoch_idx in range(num_epochs_per_stage):
     print(f"Testing Loss: {test_loss:.4f}, Testing Accuracy: {test_acc:.2f}%")
     print('------------------------------------------------------------------------------')
 
-# Stage 3: Train View C (Age_5)
-print("Stage 3: Training View C (Age_5)")
+# Stage 3: Train View C on Disease (Freeze A and B)
+print("Stage 3: Training View C on Disease (Freeze A and B)")
 optimizer_c = Adam(model.cnn_view_c.parameters(), lr=args.learning_rate)
 for param in model.cnn_view_a.parameters():
     param.requires_grad = False
@@ -338,8 +338,8 @@ for param in model.fusion_layers.parameters():
     param.requires_grad = False
 
 for epoch_idx in range(num_epochs_per_stage):
-    train_loader = dataloaders['train_age_5_loader']
-    test_loader = dataloaders['test_age_5_loader']
+    train_loader = dataloaders['train_disease_loader']
+    test_loader = dataloaders['test_disease_loader']
     train_loss, train_acc = train_single_view(model.cnn_view_c, train_loader, optimizer_c, criterion_views, device, 1, 2)
     test_loss, test_acc = train_single_view(model.cnn_view_c, test_loader, None, criterion_views, device, 1, 2, is_train=False)
     print(f"Epoch {epoch_idx+1}/{num_epochs_per_stage}")
@@ -347,8 +347,8 @@ for epoch_idx in range(num_epochs_per_stage):
     print(f"Testing Loss: {test_loss:.4f}, Testing Accuracy: {test_acc:.2f}%")
     print('------------------------------------------------------------------------------')
 
-# Stage 4: Fine-tune Fusion Layers (Disease)
-print("Stage 4: Fine-tuning Fusion Layers (Disease)")
+# Stage 4: Fine-tune Fusion Layers on Disease
+print("Stage 4: Fine-tuning Fusion Layers on Disease")
 optimizer_fusion = Adam(model.fusion_layers.parameters(), lr=args.learning_rate)
 for param in model.cnn_view_a.parameters():
     param.requires_grad = False
@@ -366,9 +366,8 @@ for epoch_idx in range(num_epochs_per_stage):
     test_loss, test_acc = train_multi_view(model, test_loader, None, criterion_final, device, 1, is_train=False)
     print(f"Epoch {epoch_idx+1}/{num_epochs_per_stage}")
     print(f"Training Loss: {train_loss:.4f}, Training Accuracy: {train_acc:.2f}%")
-    print(f"Testing Loss: {test_loss:.4f}, Testing Accuracy: {test_acc:.2f}%")
-    
-    if test_acc > best_accuracy:
+    print(f"Testing Loss: {test_loss:.4f}, Testing \n\nTesting Accuracy: {test_acc:.2f%")
+    if test_acc > best_acc:
         torch.save(model.state_dict(), args.model_save_path.rstrip('/') + '/multi_view_attention_cnn_face_tasks.pth')
         best_accuracy = test_acc
         print("Model is saved!")
