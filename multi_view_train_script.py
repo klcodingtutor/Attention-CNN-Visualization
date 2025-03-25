@@ -19,14 +19,14 @@ device = torch.device("cuda:0" if torch.cuda.is_available() and args.device == '
 
 # Define transforms for CIFAR-10
 train_transform = transforms.Compose([
-    transforms.Resize([128, 128]),
+    transforms.Resize([32, 32]),
     transforms.RandomHorizontalFlip(),
     transforms.RandomRotation(15),
     transforms.ToTensor(),
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
 ])
 test_transform = transforms.Compose([
-    transforms.Resize([128, 128]),
+    transforms.Resize([32, 32]),
     transforms.ToTensor(),
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
 ])
@@ -58,7 +58,7 @@ test_generator = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=Fa
 try:
     train_iter = iter(train_generator)
     images, labels = next(train_iter)
-    print(f"Sample batch shape: {images.shape} (expected: [{args.batch_size}, 3, 128, 128])")
+    print(f"Sample batch shape: {images.shape} (expected: [{args.batch_size}, 3, 32, 32])")
     print(f"Sample label shape: {labels.shape} (expected: [{args.batch_size}])")
 except StopIteration:
     raise ValueError("Training DataLoader is empty. Check dataset loading.")
