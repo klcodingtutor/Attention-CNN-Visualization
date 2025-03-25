@@ -137,6 +137,29 @@ class MultiViewAttentionCNN(nn.Module):
         self.cnn_view_b = AttentionCNN(image_size, image_depth, num_classes_list[1], drop_prob, device)
         self.cnn_view_c = AttentionCNN(image_size, image_depth, num_classes_list[2], drop_prob, device)
 
+        # Calculate combined feature size
+        # Assuming AttentionCNN provides feature_vector_size (flattened size of features_reshaped_filters)
+        single_feature_size = self.cnn_view_a.feature_vector_size  # e.g., 1120 if [batch, 70, 4, 4] -> 1120
+        self.combined_feature_size = 3 * single_feature_size      # e.g., 3360
+
+        # Define fusion layers for the final task
+        self.fusion_layers = nn.Sequential(
+            nn.Linear(self.combined_feature_size, 512),  # Reduce dimensionality and fuse features
+            nn.ReLU(inplace=True),
+            nn.Dropout(p=self.drop_prob),
+            nn.Linear(512, self.num_classes_final)       # Output for the final task
+        )
+
+        # Optional: Initialize weights
+        self.fusion_layers.apply(self.init_weights)
+
+    def init_weights(self, m):
+        '''Initialize weights for linear layers using Xavier initialization.'''
+        if isinstance(m, nn.Linear):
+            torch.nn.init.xavier_uniform_(m.weight)
+            m.bias.data.fill_(0.01)
+            
+
     def forward(self, view_a, view_b, view_c, return_individual_outputs=False, return_attention_features=False):
         # Process each view through its respective AttentionCNN
         features_a_reshaped_filters, features_a_x, features_a_output = self.cnn_view_a(view_a)  # Extract feature vector
