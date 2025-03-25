@@ -9,8 +9,9 @@ import cv2
 from tqdm import tqdm
 from attention_cnn import MultiViewAttentionCNN  # Your model class
 from runtime_args import args  # Runtime arguments from training
+import pandas as pd
 
-# Define CustomDataset (copied from training script for standalone use)
+# Define CustomDataset
 class CustomDataset(Dataset):
     def __init__(self, dataframe, task, image_folder, transform=None):
         self.dataframe = dataframe
@@ -18,7 +19,7 @@ class CustomDataset(Dataset):
         self.transform = transform
         self.image_folder = image_folder
         
-        valid_tasks = ['gender', 'age_10', 'age_5', 'disease']
+        valid_tasks = ['gender', 'age_10', 'disease']
         if task not in valid_tasks:
             raise ValueError(f"Task must be one of {valid_tasks}, got {task}")
 
@@ -47,15 +48,14 @@ class CustomDataset(Dataset):
         return len(self.dataframe)
 
     def __getitem__(self, idx):
-        # Load image
-        img_path = os.path.join(self.image_folder, self.dataframe.iloc[idx]['dest_filename'])
+        img_filename = self.dataframe.iloc[idx]['dest_filename']
+        img_path = os.path.join(self.image_folder, img_filename)
+        if not os.path.exists(img_path):
+            raise FileNotFoundError(f"Image not found at: {img_path}")
         image = Image.open(img_path).convert('RGB')
         if self.transform:
             image = self.transform(image)
-
-        # Get label using the internal mapping
         label = self.label_to_idx[self.dataframe.iloc[idx][self.label_col]]
-
         return image, label
 
 # Set device
@@ -63,11 +63,11 @@ device = torch.device("cuda:0" if torch.cuda.is_available() and args.device == '
 
 # Load trained model
 tasks = ['gender', 'age_10', 'disease']
-num_classes_list = []  # Will be populated from dataloaders
+num_classes_list = []
 model_path = os.path.join(args.model_save_path, 'multi_view_attention_cnn_face_tasks.pth')
-image_size = 32  # From training script
+image_size = 32
 
-# Define test transform consistent with training
+# Define test transform
 test_transform = transforms.Compose([
     transforms.Resize((image_size, image_size)),
     transforms.ToTensor(),
@@ -75,7 +75,6 @@ test_transform = transforms.Compose([
 ])
 
 # Load CSV and create dataloaders
-import pandas as pd
 df = pd.read_csv('./data/face_images_path_with_meta_jpg_exist_only.csv')
 train_df = df[df['split'] == 'train']
 image_folder = './data'
@@ -92,7 +91,7 @@ disease_num_classes = num_classes_list[2]  # 'disease' is final output
 model = MultiViewAttentionCNN(
     image_size=image_size,
     image_depth=3,
-    num_classes_list=num_classes_list,  # From datasets
+    num_classes_list=num_classes_list,
     drop_prob=args.dropout_rate,
     device=device,
     num_classes_final=disease_num_classes
@@ -101,18 +100,34 @@ model.load_state_dict(torch.load(model_path))
 model.to(device)
 model.eval()
 
-# Denormalization function
+# Fixed denormalization function
 def denormalize(image, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]):
+    """
+    Denormalize a tensor image with shape (B, C, H, W) or (C, H, W).
+    Returns the denormalized image with the same shape.
+    """
     img = image.clone()
-    for i in range(3):
-        img[i] = img[i] * std[i] + mean[i]
-    return img
+    # Ensure image has batch dimension
+    if img.dim() == 3:  # (C, H, W)
+        img = img.unsqueeze(0)  # Add batch dim -> (1, C, H, W)
+    elif img.dim() != 4:
+        raise ValueError(f"Expected image tensor with 3 or 4 dims, got {img.dim()} dims with shape {img.shape}")
+    
+    # Check number of channels
+    channels = img.size(1)
+    if channels != 3:
+        raise ValueError(f"Expected 3 channels, got {channels}")
+    
+    # Denormalize each channel
+    for c in range(channels):
+        img[:, c, :, :] = img[:, c, :, :] * std[c] + mean[c]
+    return img.squeeze(0) if image.dim() == 3 else img  # Remove batch dim if input was (C, H, W)
 
 # Process attention filters into heatmap
 def process_to_heatmap(attended_filters, input_img):
     attended_combined = torch.max(attended_filters.squeeze(0), 0)[0].detach().cpu().numpy()
     attended_combined = cv2.resize(attended_combined, (input_img.size(2), input_img.size(3)))
-    input_img_np = denormalize(input_img).squeeze(0).permute(1, 2, 0).cpu().numpy()
+    input_img_np = denormalize(input_img).permute(1, 2, 0).cpu().numpy()  # Remove batch dim here
     input_img_np = np.clip(input_img_np, 0, 1)
     heatmap = cv2.addWeighted(
         input_img_np[:, :, 1].astype(np.float32), 0.97,
@@ -126,7 +141,7 @@ def resize_image(img, size=(128, 128)):
 
 # Visualization for first image from each of 3 dataloaders
 selected_keys = ['train_gender_loader', 'train_age_10_loader', 'train_disease_loader']
-fig, axes = plt.subplots(3, 4, figsize=(20, 15))  # 3 rows (tasks), 4 cols (input + 3 heatmaps)
+fig, axes = plt.subplots(3, 4, figsize=(20, 15))
 
 for row, key in enumerate(selected_keys):
     loader = dataloaders[key]
@@ -136,6 +151,7 @@ for row, key in enumerate(selected_keys):
     
     # Get first image
     image, label = next(iter(loader))
+    print(f"Image shape from {key}: {image.shape}")  # Debug print
     image = image.to(device)
     true_label = idx_to_label[label.item()]
 
@@ -144,7 +160,7 @@ for row, key in enumerate(selected_keys):
         attended_a, _, _ = model.cnn_view_a(image)
         attended_b, _, _ = model.cnn_view_b(image)
         attended_c, _, _ = model.cnn_view_c(image)
-        output = model(image, image, image)  # Same image for all views as per training
+        output = model(image, image, image)
     predicted_idx = torch.argmax(output).item()
     predicted_label = idx_to_label[predicted_idx]  # Using disease mapping for final output
 
@@ -152,7 +168,7 @@ for row, key in enumerate(selected_keys):
     heatmap_a = process_to_heatmap(attended_a, image)
     heatmap_b = process_to_heatmap(attended_b, image)
     heatmap_c = process_to_heatmap(attended_c, image)
-    input_img = denormalize(image).squeeze(0).permute(1, 2, 0).cpu().numpy()
+    input_img = denormalize(image).permute(1, 2, 0).cpu().numpy()
     input_img = np.clip(input_img, 0, 1)
 
     # Resize for display
