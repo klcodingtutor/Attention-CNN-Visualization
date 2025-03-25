@@ -19,10 +19,10 @@ if [ ! -d "$DATA_FOLDER" ]; then
     exit 1
 fi
 
-if [ ! -f "$CSV_FILE" ]; then
-    echo "CSV file $CSV_FILE not found! Please check the path."
-    exit 1
-fi
+# if [ ! -f "$CSV_FILE" ]; then
+#     echo "CSV file $CSV_FILE not found! Please check the path."
+#     exit 1
+# fi
 
 mkdir -p "$MODEL_SAVE_PATH"
 if [ ! -d "$MODEL_SAVE_PATH" ]; then
