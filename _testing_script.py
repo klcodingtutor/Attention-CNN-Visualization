@@ -67,13 +67,26 @@ class CustomDataset(Dataset):
         # Print number of classes for verification
         print(f"Task: {self.task}, Number of classes: {len(self.label_to_idx)}")
 
+        # Verify that image folder exists
+        if not os.path.exists(self.image_folder):
+            raise FileNotFoundError(f"Image folder not found: {self.image_folder}")
+
     def __len__(self):
         return len(self.dataframe)
 
     def __getitem__(self, idx):
+        # Construct image path
+        img_filename = self.dataframe.iloc[idx]['dest_filename']
+        img_path = os.path.join(self.image_folder, img_filename)
+        
+        # Debug: Print the path being attempted
+        # print(f"Attempting to load: {img_path}")
+        
+        # Check if file exists
+        if not os.path.exists(img_path):
+            raise FileNotFoundError(f"Image not found at: {img_path}")
+
         # Load image
-        img_path = os.path.join(self.image_folder, self.dataframe.iloc[idx]['dest_filename'])
-        print(img_path)
         image = Image.open(img_path).convert('RGB')
         if self.transform:
             image = self.transform(image)
@@ -86,6 +99,10 @@ class CustomDataset(Dataset):
 # Step 4: Create Datasets and DataLoaders using the parameterized class
 tasks = ['gender', 'age_10', 'age_5', 'disease']
 image_folder = 'C:/Users/megah/Dropbox/Prompt/self_attention_face/'
+
+# Ensure the image folder exists
+if not os.path.exists(image_folder):
+    raise FileNotFoundError(f"Specified image folder does not exist: {image_folder}")
 
 dataloaders = {}
 
@@ -102,19 +119,21 @@ for task in tasks:
     dataloaders[f'train_{task}_loader'] = train_loader
     dataloaders[f'test_{task}_loader'] = test_loader
 
-# Optional: Verify the DataLoaders by iterating and print out size for image and value
+# Step 5: Verify the DataLoaders by iterating and printing sizes
 for task in tasks:
     train_key = f'train_{task}_loader'
     test_key = f'test_{task}_loader'
     print(f"{train_key} size: {len(dataloaders[train_key].dataset)}")
     print(f"{test_key} size: {len(dataloaders[test_key].dataset)}")
-    print(f"Sample train image shape: {next(iter(dataloaders[train_key]))[0].shape}")
-    print(f"Sample train label value: {next(iter(dataloaders[train_key]))[1]}")
-    print(f"Sample test image shape: {next(iter(dataloaders[test_key]))[0].shape}")
-    print(f"Sample test label value: {next(iter(dataloaders[test_key]))[1]}")
+    train_batch = next(iter(dataloaders[train_key]))
+    test_batch = next(iter(dataloaders[test_key]))
+    print(f"Sample train image shape: {train_batch[0].shape}")
+    print(f"Sample train label value: {train_batch[1]}")
+    print(f"Sample test image shape: {test_batch[0].shape}")
+    print(f"Sample test label value: {test_batch[1]}")
     print()
 
-# Step 5: Plot the first image from three selected dataloaders
+# Step 6: Plot the first image from three selected dataloaders
 # Define denormalize function
 def denormalize(image, mean, std):
     image = image.clone()
