@@ -168,7 +168,7 @@ for row, key in enumerate(selected_keys):
     heatmap_a = process_to_heatmap(attended_a, image)
     heatmap_b = process_to_heatmap(attended_b, image)
     heatmap_c = process_to_heatmap(attended_c, image)
-    input_img = denormalize(image).permute(1, 2, 0).cpu().numpy()
+    input_img = denormalize(image).squeeze(0).permute(1, 2, 0).cpu().numpy()
     input_img = np.clip(input_img, 0, 1)
 
     # Resize for display
