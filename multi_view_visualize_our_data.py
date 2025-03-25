@@ -12,6 +12,9 @@ from torchsummary import summary
 from runtime_args import args  # Import runtime arguments
 from attention_cnn import AttentionCNN, MultiViewAttentionCNN  # Import model classes
 
+# Set device based on training script logic
+device = torch.device("cuda:0" if torch.cuda.is_available() and args.device == 'gpu' else 'cpu')
+
 # Step 1: Load the CSV and split into train and test sets
 df = pd.read_csv('./data/face_images_path_with_meta_jpg_exist_only.csv')
 train_df = df[df['split'] == 'train']
