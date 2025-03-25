@@ -18,7 +18,7 @@ mkdir -p "$DATA_FOLDER"
 mkdir -p "$MODEL_SAVE_PATH"
 
 echo "Starting Training script with the following parameters:"
-echo "python multi_view_train_script.py \\"
+echo "python multi_view_train_script_our_data.py \\"
 echo "    --data_folder $DATA_FOLDER \\"
 echo "    --img_size $IMG_SIZE \\"
 echo "    --batch_size $BATCH_SIZE \\"
@@ -30,7 +30,7 @@ echo "    --device $DEVICE \\"
 echo "    --model_save_path $MODEL_SAVE_PATH"
 
 # Run the training script
-python multi_view_train_script.py \
+python multi_view_train_script_our_data.py \
     --data_folder "$DATA_FOLDER" \
     --img_size "$IMG_SIZE" \
     --batch_size "$BATCH_SIZE" \
