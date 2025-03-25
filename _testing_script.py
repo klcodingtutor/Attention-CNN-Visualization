@@ -3,10 +3,12 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 import torchvision.transforms as transforms
+import matplotlib.pyplot as plt
+import numpy as np
 import os
 
 # Step 1: Load the CSV and split into train and test sets
-df = pd.read_csv('face_images_path_with_meta_jpg_exist_only.csv')
+df = pd.read_csv('C:/Users/megah/Dropbox/Prompt/face_images_path_with_meta_jpg_exist_only.csv')
 train_df = df[df['split'] == 'train']
 test_df = df[df['split'] == 'test']
 
@@ -31,6 +33,7 @@ class CustomDataset(Dataset):
         Parameters:
             dataframe: pandas DataFrame with the data
             task: str, one of 'gender', 'age_10', 'age_5', 'disease'
+            image_folder: str, path to the folder containing images
             transform: torchvision transforms to apply to images
         """
         self.dataframe = dataframe
@@ -70,6 +73,7 @@ class CustomDataset(Dataset):
     def __getitem__(self, idx):
         # Load image
         img_path = os.path.join(self.image_folder, self.dataframe.iloc[idx]['dest_filename'])
+        print(img_path)
         image = Image.open(img_path).convert('RGB')
         if self.transform:
             image = self.transform(image)
@@ -82,7 +86,6 @@ class CustomDataset(Dataset):
 # Step 4: Create Datasets and DataLoaders using the parameterized class
 tasks = ['gender', 'age_10', 'age_5', 'disease']
 image_folder = 'C:/Users/megah/Dropbox/Prompt/self_attention_face/'
-
 
 dataloaders = {}
 
@@ -110,3 +113,51 @@ for task in tasks:
     print(f"Sample test image shape: {next(iter(dataloaders[test_key]))[0].shape}")
     print(f"Sample test label value: {next(iter(dataloaders[test_key]))[1]}")
     print()
+
+# Step 5: Plot the first image from three selected dataloaders
+# Define denormalize function
+def denormalize(image, mean, std):
+    image = image.clone()
+    for c in range(3):
+        image[c] = image[c] * std[c] + mean[c]
+    return image
+
+# Select three dataloaders
+selected_keys = ['train_gender_loader', 'train_age_10_loader', 'train_age_5_loader']
+selected_loaders = [dataloaders[key] for key in selected_keys]
+tasks = [key.split('_')[1] for key in selected_keys]  # ['gender', 'age_10', 'age_5']
+
+# Normalization parameters (same as used in transforms)
+mean = [0.485, 0.456, 0.406]
+std = [0.229, 0.224, 0.225]
+
+# Create figure with 3 subplots
+fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+
+for i, (loader, task) in enumerate(zip(selected_loaders, tasks)):
+    # Get dataset
+    dataset = loader.dataset
+    # Create idx_to_label mapping to retrieve original labels
+    idx_to_label = {v: k for k, v in dataset.label_to_idx.items()}
+    # Get first batch
+    batch = next(iter(loader))
+    images, labels = batch
+    # Get first image and label
+    image = images[0]
+    label_idx = labels[0].item()  # Convert tensor to scalar
+    # Get original label
+    original_label = idx_to_label[label_idx]
+    # Denormalize image for proper visualization
+    image_denorm = denormalize(image, mean, std)
+    # Convert to numpy: (C, H, W) -> (H, W, C)
+    image_np = image_denorm.permute(1, 2, 0).cpu().numpy()
+    # Clip to [0,1] for display
+    image_np = np.clip(image_np, 0, 1)
+    # Plot
+    axes[i].imshow(image_np)
+    axes[i].set_title(f"Task: {task}, Label: {original_label}")
+    axes[i].axis('off')  # Hide axes for cleaner visualization
+
+# Adjust layout and show plot
+plt.tight_layout()
+plt.show()
