@@ -50,12 +50,12 @@ case "$TASK" in
         ;;
 esac
 
-# Define the model file path based on the task
-MODEL_FILE="$MODEL_SAVE_PATH/multi_view_attention_cnn_${TASK}.pth"
-if [ ! -f "$MODEL_FILE" ]; then
-    echo "Trained model file $MODEL_FILE not found! Please train the model for task '$TASK' first."
-    exit 1
-fi
+# # Define the model file path based on the task
+# MODEL_FILE="$MODEL_SAVE_PATH/multi_view_attention_cnn_${TASK}.pth"
+# if [ ! -f "$MODEL_FILE" ]; then
+#     echo "Trained model file $MODEL_FILE not found! Please train the model for task '$TASK' first."
+#     exit 1
+# fi
 
 # Adjust path for Windows compatibility if running in a Windows environment (e.g., Git Bash)
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
