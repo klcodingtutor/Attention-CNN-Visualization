@@ -98,7 +98,7 @@ class CustomDataset(Dataset):
 
 # Step 4: Create Datasets and DataLoaders using the parameterized class
 tasks = ['gender', 'age_10', 'age_5', 'disease']
-image_folder = 'C:/Users/megah/Dropbox/Prompt/self_attention_face/'
+image_folder = './data'
 
 # Ensure the image folder exists
 if not os.path.exists(image_folder):
