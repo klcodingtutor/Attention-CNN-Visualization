@@ -117,7 +117,7 @@ class AttentionCNN(nn.Module):
 class MultiViewAttentionCNN(nn.Module):
     '''A multi-view CNN architecture with attention mechanism for three parallel image inputs, each for a different classification task.'''
 
-    def __init__(self, image_size, image_depth, num_classes_list,num_classes_final, drop_prob, device):
+    def __init__(self, image_size, image_depth, num_classes_list, num_classes_final, drop_prob, device):
         '''Initialize the multi-view model with three AttentionCNN submodules, each for a different task.'''
 
         super(MultiViewAttentionCNN, self).__init__()
@@ -131,6 +131,7 @@ class MultiViewAttentionCNN(nn.Module):
         self.num_classes_list = num_classes_list
         self.drop_prob = drop_prob
         self.device = device
+        self.num_classes_final = num_classes_final
 
         # Instantiate three AttentionCNN submodules, each with its own num_classes
         self.cnn_view_a = AttentionCNN(image_size, image_depth, num_classes_list[0], drop_prob, device)
