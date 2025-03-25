@@ -13,7 +13,7 @@ def download_and_validate_cifar10(data_root="./cifar10_data", batch_size=4, num_
 
     # Define basic transform (no augmentation, just tensor conversion for validation)
     transform = transforms.Compose([
-        transforms.Resize([64, 64]),
+        transforms.Resize([128, 128]),
         transforms.ToTensor()
     ])
 

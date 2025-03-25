@@ -5,7 +5,7 @@
 # Parameters
 DATA_FOLDER="./cifar10_data"  # Directory containing CIFAR-10 data
 NUM_CLASSES=10                # CIFAR-10 has 10 classes
-IMG_SIZE=64                   # CIFAR-10 images are 32x32
+IMG_SIZE=128                   # CIFAR-10 images are 32x32
 DROPOUT_RATE=0.5              # Dropout rate used in training
 NUM_WORKERS=4                 # Number of workers for DataLoader
 DEVICE="gpu"                  # Either "gpu" or "cpu"
