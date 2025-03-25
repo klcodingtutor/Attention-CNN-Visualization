@@ -262,6 +262,7 @@ for row, key in enumerate(selected_keys):
     axes[3].imshow(heatmap_c_resized)
     axes[3].set_title("View C Attention Heatmap")
     axes[3].axis('off')
-    fig.suptitle(f"Predicted: {predicted_class} (Label: {class_names[label.item()]})")
+    # fig.suptitle(f"Predicted: {predicted_class} (Label: {class_names[label.item()]})")
+    fig.suptitle(f"Predicted: {predicted_label} (True: {true_label})")
     plt.savefig(os.path.join(output_folder, f"test_image_1.png"))
     plt.close()
