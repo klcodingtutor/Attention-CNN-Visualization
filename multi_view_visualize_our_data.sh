@@ -30,25 +30,25 @@ if [ ! -d "$MODEL_SAVE_PATH" ]; then
     exit 1
 fi
 
-# Set NUM_CLASSES dynamically based on TASK (approximate values based on typical datasets)
-case "$TASK" in
-    "gender")
-        NUM_CLASSES=2  # Typically 2 classes: male, female
-        ;;
-    "age_10")
-        NUM_CLASSES=10  # Assuming age divided by 10, rounded (e.g., 0-90 -> ~10 classes)
-        ;;
-    "age_5")
-        NUM_CLASSES=20  # Assuming age divided by 5, rounded (e.g., 0-95 -> ~20 classes)
-        ;;
-    "disease")
-        NUM_CLASSES=5  # Placeholder; adjust based on your actual dataset
-        ;;
-    *)
-        echo "Invalid TASK: $TASK. Must be 'gender', 'age_10', 'age_5', or 'disease'."
-        exit 1
-        ;;
-esac
+# # Set NUM_CLASSES dynamically based on TASK (approximate values based on typical datasets)
+# case "$TASK" in
+#     "gender")
+#         NUM_CLASSES=2  # Typically 2 classes: male, female
+#         ;;
+#     "age_10")
+#         NUM_CLASSES=10  # Assuming age divided by 10, rounded (e.g., 0-90 -> ~10 classes)
+#         ;;
+#     "age_5")
+#         NUM_CLASSES=20  # Assuming age divided by 5, rounded (e.g., 0-95 -> ~20 classes)
+#         ;;
+#     "disease")
+#         NUM_CLASSES=5  # Placeholder; adjust based on your actual dataset
+#         ;;
+#     *)
+#         echo "Invalid TASK: $TASK. Must be 'gender', 'age_10', 'age_5', or 'disease'."
+#         exit 1
+#         ;;
+# esac
 
 # # Define the model file path based on the task
 # MODEL_FILE="$MODEL_SAVE_PATH/multi_view_attention_cnn_${TASK}.pth"
