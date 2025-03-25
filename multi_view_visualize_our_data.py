@@ -197,6 +197,8 @@ def resize_image(img, size=(128, 128)):
 selected_keys = ['train_gender_loader', 'train_age_10_loader', 'train_disease_loader']
 fig, axes = plt.subplots(3, 4, figsize=(20, 15))
 
+# specifically extract idx_to_label for disease
+idx_to_label_disease = {v: k for k, v in dataloaders['train_disease_loader'].dataset.label_to_idx.items()}
 for row, key in enumerate(selected_keys):
     loader = dataloaders[key]
     task = key.split('_')[1]
@@ -229,7 +231,7 @@ for row, key in enumerate(selected_keys):
     predicted_idx = torch.argmax(output).item()
     print(f"Predicted index: {predicted_idx}")
     print(f"idx_to_label: {idx_to_label}")
-    predicted_label = idx_to_label[predicted_idx]
+    predicted_label = idx_to_label_disease[predicted_idx]
     print(f"Predicted label: {predicted_label}")
     print(f"True label: {true_label}")
 
