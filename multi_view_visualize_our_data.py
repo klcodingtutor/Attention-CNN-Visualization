@@ -202,11 +202,27 @@ for row, key in enumerate(selected_keys):
     dataset = loader.dataset
     idx_to_label = {v: k for k, v in dataset.label_to_idx.items()}
     
-    # Get first image
-    image, label = next(iter(loader))
-    print(f"Image shape from {key}: {image.shape}")  # Debug print
-    image = image.to(device)
+
+
+    
+
+    # Get the batch
+    images, labels = next(iter(loader))
+
+    # Select the first image and label
+    image = images[0].unsqueeze(0)  # Add batch dimension for model
+    label = labels[0]               # Scalar tensor
+
+    # Get the true label
     true_label = idx_to_label[label.item()]
+
+    # Optional: Pass to model
+    with torch.no_grad():
+        output = model(image)
+
+
+
+
 
     # Get attention filters
     with torch.no_grad():
