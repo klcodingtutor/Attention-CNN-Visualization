@@ -3,8 +3,8 @@
 # Script to visualize MultiViewAttentionCNN on custom face image dataset test split
 
 # Parameters
-DATA_FOLDER="C:/Users/megah/Dropbox/Prompt/self_attention_face"  # Directory containing face images
-CSV_FILE="C:/Users/megah/Dropbox/Prompt/face_images_path_with_meta_jpg_exist_only.csv"  # CSV with metadata
+DATA_FOLDER="./data"  # Directory containing face images
+CSV_FILE="./data/face_images_path_with_meta_jpg_exist_only.csv"  # CSV with metadata
 TASK="gender"                 # Task to visualize: 'gender', 'age_10', 'age_5', or 'disease'
 NUM_CLASSES=""                # Number of classes (set dynamically based on TASK)
 IMG_SIZE=32                  # Image size after resizing (from your transforms)
