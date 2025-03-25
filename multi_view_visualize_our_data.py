@@ -1,3 +1,4 @@
+from tqdm import tqdm
 import pandas as pd
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -193,78 +194,97 @@ def process_to_heatmap(attended_filters, input_img):
 def resize_image(img, size=(128, 128)):
     return cv2.resize(img, size, interpolation=cv2.INTER_NEAREST)
 
-# Visualization for first image from each of 3 dataloaders
-selected_keys = ['train_gender_loader', 'train_age_10_loader', 'train_disease_loader']
-fig, axes = plt.subplots(3, 4, figsize=(20, 15))
 
-# specifically extract idx_to_label for disease
+# Create output folders
+os.makedirs("output", exist_ok=True)
+os.makedirs("attentions", exist_ok=True)
+
+# Specifically extract idx_to_label for disease (fusion output)
 idx_to_label_disease = {v: k for k, v in dataloaders['train_disease_loader'].dataset.label_to_idx.items()}
-for row, key in enumerate(selected_keys):
-    loader = dataloaders[key]
-    task = key.split('_')[1]
+
+# Visualization for all images from each of 3 dataloaders
+selected_keys = ['train_gender_loader', 'train_age_10_loader', 'train_disease_loader']
+
+for task_key in selected_keys:
+    loader = dataloaders[task_key]
+    task = task_key.split('_')[1]
     dataset = loader.dataset
     idx_to_label = {v: k for k, v in dataset.label_to_idx.items()}
     
-
-
-    
-
-    # Get the batch
-    images, labels = next(iter(loader))
-
-    # Select the first image and label
-    image = images[0].unsqueeze(0)  # Add batch dimension for model
-    label = labels[0]               # Scalar tensor
-
-    # Get the true label
-    true_label = idx_to_label[label.item()]
-
-    image = image.to(device)
-
-
-    # Get attention filters
-    with torch.no_grad():
-        attended_a, _, _ = model.cnn_view_a(image)
-        attended_b, _, _ = model.cnn_view_b(image)
-        attended_c, _, _ = model.cnn_view_c(image)
-        output = model(image, image, image)
-    predicted_idx = torch.argmax(output).item()
-    print(f"Predicted index: {predicted_idx}")
-    print(f"idx_to_label: {idx_to_label}")
-    predicted_label = idx_to_label_disease[predicted_idx]
-    print(f"Predicted label: {predicted_label}")
-    print(f"True label: {true_label}")
-
-    # Generate heatmaps
-    heatmap_a = process_to_heatmap(attended_a, image)
-    heatmap_b = process_to_heatmap(attended_b, image)
-    heatmap_c = process_to_heatmap(attended_c, image)
-    
-    
-    input_img = denormalize(image).squeeze(0).permute(1, 2, 0).cpu().numpy()
-    input_img = np.clip(input_img, 0, 1)
-
-    # Resize for display
-    input_img_resized = resize_image(input_img)
-    heatmap_a_resized = resize_image(heatmap_a)
-    heatmap_b_resized = resize_image(heatmap_b)
-    heatmap_c_resized = resize_image(heatmap_c)
-
-    # Plot
-    fig, axes = plt.subplots(1, 4, figsize=(20, 5))
-    axes[0].imshow(input_img_resized)
-    axes[0].set_title("Input Image")
-    axes[0].axis('off')
-    axes[1].imshow(heatmap_a_resized)
-    axes[1].set_title("View A Attention Heatmap")
-    axes[1].axis('off')
-    axes[2].imshow(heatmap_b_resized)
-    axes[2].set_title("View B Attention Heatmap")
-    axes[2].axis('off')
-    axes[3].imshow(heatmap_c_resized)
-    axes[3].set_title("View C Attention Heatmap")
-    axes[3].axis('off')
-    # fig.suptitle(f"Predicted: {predicted_class} (Label: {class_names[label.item()]})")
-    # fig.suptitle(f"Predicted: {predicted_label} (True: {true_label})")
-    plt.savefig(os.path.join("output", f"test_image_1.png"))
-    plt.close()
+    # Process all images in the dataloader
+    for batch_idx, (images, labels) in enumerate(tqdm(loader, desc=f"Processing {task}")):
+        for img_idx in range(images.size(0)):  # Loop through each image in the batch
+            # Select individual image and label
+            image = images[img_idx].unsqueeze(0).to(device)  # Shape: (1, C, H, W)
+            label = labels[img_idx].item()  # Scalar label
+            true_label = idx_to_label[label]
+            
+            # Create a unique identifier for the image (replace with actual subject name if available)
+            subject = f"batch{batch_idx}_img{img_idx}"
+            
+            # Get attention filters and fusion output
+            with torch.no_grad():
+                attended_a, _, _ = model.cnn_view_a(image)
+                attended_b, _, _ = model.cnn_view_b(image)
+                attended_c, _, _ = model.cnn_view_c(image)
+                output = model(image, image, image)
+            predicted_idx = torch.argmax(output).item()
+            predicted_label = idx_to_label_disease[predicted_idx]
+            
+            # Generate heatmaps with overlay
+            heatmap_a = process_to_heatmap(attended_a, image)
+            heatmap_b = process_to_heatmap(attended_b, image)
+            heatmap_c = process_to_heatmap(attended_c, image)
+            
+            # Extract attention maps without overlay
+            attended_a_combined = torch.max(attended_a.squeeze(0), 0)[0].detach().cpu().numpy()
+            attended_b_combined = torch.max(attended_b.squeeze(0), 0)[0].detach().cpu().numpy()
+            attended_c_combined = torch.max(attended_c.squeeze(0), 0)[0].detach().cpu().numpy()
+            
+            # Resize attention maps to match input image dimensions
+            attended_a_resized = cv2.resize(attended_a_combined, (image.size(3), image.size(2)))
+            attended_b_resized = cv2.resize(attended_b_combined, (image.size(3), image.size(2)))
+            attended_c_resized = cv2.resize(attended_c_combined, (image.size(3), image.size(2)))
+            
+            # Save attention maps without overlay
+            cv2.imwrite(os.path.join("attentions", f"{subject}_{task}_view_a.png"), 
+                       (attended_a_resized * 255).astype(np.uint8))
+            cv2.imwrite(os.path.join("attentions", f"{subject}_{task}_view_b.png"), 
+                       (attended_b_resized * 255).astype(np.uint8))
+            cv2.imwrite(os.path.join("attentions", f"{subject}_{task}_view_c.png"), 
+                       (attended_c_resized * 255).astype(np.uint8))
+            
+            # Prepare input image for display
+            input_img = denormalize(image).squeeze(0).permute(1, 2, 0).cpu().numpy()
+            input_img = np.clip(input_img, 0, 1)
+            
+            # Resize for display
+            input_img_resized = resize_image(input_img)
+            heatmap_a_resized = resize_image(heatmap_a)
+            heatmap_b_resized = resize_image(heatmap_b)
+            heatmap_c_resized = resize_image(heatmap_c)
+            
+            # Create plot
+            fig, axes = plt.subplots(1, 4, figsize=(20, 5))
+            
+            # Input image with fusion prediction
+            axes[0].imshow(input_img_resized)
+            axes[0].set_title(f"Input\nFusion Pred: {predicted_label} | True: {true_label}")
+            axes[0].axis('off')
+            
+            # Attention heatmaps with fusion prediction
+            axes[1].imshow(heatmap_a_resized)
+            axes[1].set_title(f"View A\nPred: {predicted_label} | True: {true_label}")
+            axes[1].axis('off')
+            
+            axes[2].imshow(heatmap_b_resized)
+            axes[2].set_title(f"View B\nPred: {predicted_label} | True: {true_label}")
+            axes[2].axis('off')
+            
+            axes[3].imshow(heatmap_c_resized)
+            axes[3].set_title(f"View C\nPred: {predicted_label} | True: {true_label}")
+            axes[3].axis('off')
+            
+            # Save the figure
+            plt.savefig(os.path.join("output", f"{subject}_{task}.png"))
+            plt.close()
