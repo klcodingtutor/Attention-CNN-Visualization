@@ -367,7 +367,7 @@ for epoch_idx in range(num_epochs_per_stage):
     print(f"Epoch {epoch_idx+1}/{num_epochs_per_stage}")
     print(f"Training Loss: {train_loss:.4f}, Training Accuracy: {train_acc:.2f}%")
     print(f"Testing Loss: {test_loss:.4f}, Testing Accuracy: {test_acc:.2f}%")
-    if test_acc > best_acc:
+    if test_acc > best_accuracy:
         torch.save(model.state_dict(), args.model_save_path.rstrip('/') + '/multi_view_attention_cnn_face_tasks.pth')
         best_accuracy = test_acc
         print("Model is saved!")
