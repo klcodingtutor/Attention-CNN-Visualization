@@ -138,8 +138,14 @@ for task in tasks:
     print(f"Sample test label value: {test_batch[1]}")
     print()
 
+num_classes_list = []
+
 # get number of classes for each task
-num_classes_list = [len(dataloaders[f'train_{task}_loader'].dataset.label_to_idx) for task in tasks]
+for task in tasks:  # Use gender, age_10, disease for views
+    train_loader = dataloaders[f'train_{task}_loader']
+    num_classes = len(train_loader.dataset.label_to_idx)
+    num_classes_list.append(num_classes)
+
 print(f"Number of classes for each task: {num_classes_list}")
 
 model = MultiViewAttentionCNN(
