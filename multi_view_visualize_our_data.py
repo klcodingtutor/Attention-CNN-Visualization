@@ -250,11 +250,11 @@ for task_key in selected_keys:
             attended_c_resized = cv2.resize(attended_c_combined, (image.size(3), image.size(2)))
             
             # Save attention maps without overlay
-            cv2.imwrite(os.path.join("attentions", f"{subject}_{task}_view_a.png"), 
+            cv2.imwrite(os.path.join("attentions", f"{subject}_{task}_view_a.jpg"), 
                        (attended_a_resized * 255).astype(np.uint8))
-            cv2.imwrite(os.path.join("attentions", f"{subject}_{task}_view_b.png"), 
+            cv2.imwrite(os.path.join("attentions", f"{subject}_{task}_view_b.jpg"), 
                        (attended_b_resized * 255).astype(np.uint8))
-            cv2.imwrite(os.path.join("attentions", f"{subject}_{task}_view_c.png"), 
+            cv2.imwrite(os.path.join("attentions", f"{subject}_{task}_view_c.jpg"), 
                        (attended_c_resized * 255).astype(np.uint8))
             
             # Prepare input image for display
@@ -289,5 +289,5 @@ for task_key in selected_keys:
             axes[3].axis('off')
             
             # Save the figure
-            plt.savefig(os.path.join("output", f"{subject}_{task}.png"))
+            plt.savefig(os.path.join("output", f"{subject}_{task}.jpg"))
             plt.close()
