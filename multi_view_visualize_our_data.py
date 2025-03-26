@@ -101,7 +101,10 @@ class CustomDataset(Dataset):
         # Get label using the internal mapping
         label = self.label_to_idx[self.dataframe.iloc[idx][self.label_col]]
 
-        return image, label
+        # Get subject name (e.g., from 'dest_filename' or another column)
+        subject_name = self.dataframe.iloc[idx]['dest_filename']  # Adjust column name if needed
+
+        return image, label, subject_name  # Return subject name as well
 
 # Step 4: Create Datasets and DataLoaders using the parameterized class
 tasks = ['gender', 'age_10', 'disease']  # Primary tasks, keeping 'age_5' as an option
@@ -212,7 +215,7 @@ for task_key in selected_keys:
     idx_to_label = {v: k for k, v in dataset.label_to_idx.items()}
     
     # Process all images in the dataloader
-    for batch_idx, (images, labels) in enumerate(tqdm(loader, desc=f"Processing {task}")):
+    for batch_idx, (images, labels, subject_names) in enumerate(tqdm(loader, desc=f"Processing {task}")):
         for img_idx in range(images.size(0)):  # Loop through each image in the batch
             # Select individual image and label
             image = images[img_idx].unsqueeze(0).to(device)  # Shape: (1, C, H, W)
@@ -220,7 +223,7 @@ for task_key in selected_keys:
             true_label = idx_to_label[label]
             
             # Create a unique identifier for the image (replace with actual subject name if available)
-            subject = f"batch{batch_idx}_img{img_idx}"
+            subject = subject_names[img_idx]  # Use the actual subject name from the dataset
             
             # Get attention filters and fusion output
             with torch.no_grad():
