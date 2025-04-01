@@ -137,11 +137,11 @@ class MultiViewAttentionCNN(nn.Module):
             else:
                 return features_a_output, features_b_output, features_c_output
         else:
-            print(f"Shape of combined_features: {features_a_reshaped_filters.shape}, {features_b_reshaped_filters.shape}, {features_c_reshaped_filters.shape}")
+            # print(f"Shape of combined_features: {features_a_reshaped_filters.shape}, {features_b_reshaped_filters.shape}, {features_c_reshaped_filters.shape}")
             combined_features = torch.cat((features_a_reshaped_filters, features_b_reshaped_filters, features_c_reshaped_filters), dim=1)
-            print(f"Shape of combined_features after cat: {features_a_reshaped_filters.shape}, {features_b_reshaped_filters.shape}, {features_c_reshaped_filters.shape}")
+            # print(f"Shape of combined_features after cat: {features_a_reshaped_filters.shape}, {features_b_reshaped_filters.shape}, {features_c_reshaped_filters.shape}")
             combined_features = combined_features.reshape(combined_features.size(0), -1)
-            print(f"Shape of combined_features after reshape: {features_a_reshaped_filters.shape}, {features_b_reshaped_filters.shape}, {features_c_reshaped_filters.shape}")
+            # print(f"Shape of combined_features after reshape: {features_a_reshaped_filters.shape}, {features_b_reshaped_filters.shape}, {features_c_reshaped_filters.shape}")
             fused_output = self.fusion_layers(combined_features)
             if return_attention_features:
                 return fused_output, features_a_reshaped_filters, features_b_reshaped_filters, features_c_reshaped_filters
