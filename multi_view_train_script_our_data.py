@@ -219,10 +219,10 @@ criterion_views = torch.nn.CrossEntropyLoss()  # For individual views
 criterion_final = torch.nn.CrossEntropyLoss()  # For fused output
 
 # Print model summary (for one view as example)
-summary(model.cnn_view_a, (3, 64, 64))
+# summary(model.cnn_view_a, (3, 64, 64))
 
 # Print model summary (for entire model)
-summary(model, [(3, 64, 64), (3, 64, 64), (3, 64, 64)])
+# summary(model, [(3, 64, 64), (3, 64, 64), (3, 64, 64)])
 
 # Modified training functions to handle multiple tasks
 def train_single_view(submodel, dataloader, optimizer, criterion, device, num_epochs, task_idx, is_train=True):

@@ -36,7 +36,7 @@ criterion = torch.nn.CrossEntropyLoss()
 # Move the model to the specified device (CPU or GPU)
 model = model.to(device)
 # Print a summary of the model architecture based on input shape (depth, height, width)
-summary(model, (args.img_depth, args.img_size, args.img_size))
+# summary(model, (args.img_depth, args.img_size, args.img_size))
 
 # Initialize variable to track the best testing accuracy for model saving
 best_accuracy = 0

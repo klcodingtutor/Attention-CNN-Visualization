@@ -79,10 +79,10 @@ model = model.to(device)
 criterion = torch.nn.CrossEntropyLoss()
 
 # Print model summary (for one view)
-summary(model.cnn_view_a, (3, args.img_size, args.img_size))
+# summary(model.cnn_view_a, (3, args.img_size, args.img_size))
 
 # Print model summary (for entire model)
-summary(model, [(3, args.img_size, args.img_size), (3, args.img_size, args.img_size), (3, args.img_size, args.img_size)])
+# summary(model, [(3, args.img_size, args.img_size), (3, args.img_size, args.img_size), (3, args.img_size, args.img_size)])
 
 def train_single_view(submodel, dataloader, optimizer, criterion, device, num_epochs, is_train=True):
     mode = "Training" if is_train else "Testing"
