@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 
 class AttentionCNN(nn.Module):
-    '''A CNN architecture with an attention mechanism.'''
+    '''A CNN architecture with an attention mechanism at the final layer.'''
 
     def __init__(self, image_size, image_depth, num_classes, drop_prob, device):
         super(AttentionCNN, self).__init__()
@@ -46,7 +46,7 @@ class AttentionCNN(nn.Module):
         self.feature_vector_size = self.feature_channels * (self.feature_size)**2
         self.scale = nn.Parameter(torch.zeros(1))
 
-        # Attention components
+        # Attention components (applied at the last layer)
         self.norm = nn.LayerNorm(self.feature_channels)
         self.mha = nn.MultiheadAttention(embed_dim=self.feature_channels, num_heads=5)
 
@@ -69,12 +69,12 @@ class AttentionCNN(nn.Module):
         # Convolutional layers
         x = self.conv_layers(x)
         
-        # Apply attention
+        # Apply attention at the last layer
         attended_features, attention_map = self.use_attention(x)
-        x = self.scale * self.use_attention(x)[0] + attended_features
+        x = self.scale * attended_features + x  # Residual connection
         
         # Flatten for fully connected layers
-        x_flat = attended_features.reshape(attended_features.size(0), -1)
+        x_flat = x.reshape(x.size(0), -1)
         
         # Final classification
         output = self.fc_layers(x_flat)
@@ -88,7 +88,7 @@ class AttentionCNN(nn.Module):
         accuracy = correct_pred * (100 / num_data)
         return accuracy.item()
 
-
+    
 class MultiViewAttentionCNN(nn.Module):
     '''A multi-view CNN architecture with attention mechanism for three parallel image inputs.'''
 
@@ -137,8 +137,11 @@ class MultiViewAttentionCNN(nn.Module):
             else:
                 return features_a_output, features_b_output, features_c_output
         else:
+            print(f"Shape of combined_features: {features_a_reshaped_filters.shape}, {features_b_reshaped_filters.shape}, {features_c_reshaped_filters.shape}")
             combined_features = torch.cat((features_a_reshaped_filters, features_b_reshaped_filters, features_c_reshaped_filters), dim=1)
-            combined_features = combined_features.view(combined_features.size(0), -1)
+            print(f"Shape of combined_features after cat: {features_a_reshaped_filters.shape}, {features_b_reshaped_filters.shape}, {features_c_reshaped_filters.shape}")
+            combined_features = combined_features.reshape(combined_features.size(0), -1)
+            print(f"Shape of combined_features after reshape: {features_a_reshaped_filters.shape}, {features_b_reshaped_filters.shape}, {features_c_reshaped_filters.shape}")
             fused_output = self.fusion_layers(combined_features)
             if return_attention_features:
                 return fused_output, features_a_reshaped_filters, features_b_reshaped_filters, features_c_reshaped_filters
