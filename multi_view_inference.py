@@ -204,3 +204,66 @@ output_dir = 'gender_test_outputs'
 accuracy, results_df, attention_maps = test_gender_view(model, test_loader, device, output_dir)
 
 print(f"Testing complete! Results saved in {output_dir}")
+
+# Step 6: Testing function for Age_10 (View B)
+def test_age_10_view(model, dataloader, device, output_dir='age_10_test_outputs'):
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    all_predictions = []
+    all_true_labels = []
+    all_attention_maps = []
+    all_filenames = []
+
+    with torch.no_grad():
+        for i, (images, labels) in tqdm(enumerate(dataloader), total=len(dataloader)):
+            filenames = dataloader.dataset.dataframe.iloc[i * dataloader.batch_size:(i + 1) * dataloader.batch_size]['dest_filename'].values
+            images, labels = images.to(device), labels.to(device)
+            
+            # Get outputs from View B (age_10) with attention maps
+            view_b_output, view_b_attention, view_b_pred_output = model.cnn_view_b(images)
+            
+            # Predictions
+            _, preds = torch.max(view_b_pred_output, 1)
+
+            # Collect data
+            all_predictions.extend(preds.cpu().numpy())
+            all_true_labels.extend(labels.cpu().numpy())
+            all_attention_maps.extend(view_b_attention.cpu().numpy())
+            all_filenames.extend(filenames)
+
+    # Convert idx back to original labels (age_10 values)
+    idx_to_label = {v: k for k, v in dataloader.dataset.label_to_idx.items()}
+    predicted_labels = [idx_to_label[pred] for pred in all_predictions]
+    true_labels = [idx_to_label[label] for label in all_true_labels]
+
+    # Calculate accuracy
+    accuracy = np.mean(np.array(all_predictions) == np.array(all_true_labels)) * 100
+    print(f"Age_10 Test Accuracy: {accuracy:.2f}%")
+
+    # Save results to a DataFrame
+    results_df = pd.DataFrame({
+        'filename': all_filenames,
+        'true_label': true_labels,
+        'predicted_label': predicted_labels
+    })
+    results_df.to_csv(os.path.join(output_dir, 'inferenced_age_10_predictions.csv'), index=False)
+    print(f"Predictions saved to {os.path.join(output_dir, 'inferenced_age_10_predictions.csv')}")
+
+    # Save attention maps as numpy arrays
+    attention_maps_array = np.array(all_attention_maps)
+    np.save(os.path.join(output_dir, 'inferenced_age_10_attention_maps.npy'), attention_maps_array)
+    print(f"Attention maps saved to {os.path.join(output_dir, 'inferenced_age_10_attention_maps.npy')}")
+
+    return accuracy, results_df, attention_maps_array
+
+# Step 7: Run the test for Age_10
+print("Testing Age_10 View (View B)")
+output_dir = 'age_10_test_outputs'
+
+task = "age_10"
+test_loader = dataloaders[f'test_{task}_loader'] 
+
+accuracy, results_df, attention_maps = test_age_10_view(model, test_loader, device, output_dir)
+
+print(f"Testing complete! Results saved in {output_dir}")
