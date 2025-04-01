@@ -191,6 +191,8 @@ def process_to_heatmap(attended_filters, input_img):
         input_img_np[:, :, 1].astype(np.float32), 0.97,
         attended_combined.astype(np.float32), 0.07, 0
     )
+    # no overlap
+    heatmap = attended_combined.astype(np.float32)
     return heatmap
 
 # Resize images for better visualization
