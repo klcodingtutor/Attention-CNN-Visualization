@@ -280,7 +280,8 @@ def train_multi_view(model, dataloader, optimizer, criterion, device, num_epochs
     return avg_loss, avg_acc
 
 # Training stages
-num_epochs_per_stage = args.epoch // 4
+# num_epochs_per_stage = args.epoch // 4
+num_epochs_stage_1, num_epochs_stage_2, num_epochs_stage_3, num_epochs_stage_4 = args.epoch
 best_accuracy = 0
 
 # Stage 1: Train View A on Gender (Freeze B and C)
@@ -293,6 +294,7 @@ for param in model.cnn_view_c.parameters():
 for param in model.fusion_layers.parameters():
     param.requires_grad = False
 
+num_epochs_per_stage = num_epochs_stage_1
 for epoch_idx in range(num_epochs_per_stage):
     train_loader = dataloaders['train_gender_loader']
     test_loader = dataloaders['test_gender_loader']
@@ -315,6 +317,7 @@ for param in model.cnn_view_c.parameters():
 for param in model.fusion_layers.parameters():
     param.requires_grad = False
 
+num_epochs_per_stage = num_epochs_stage_2
 for epoch_idx in range(num_epochs_per_stage):
     train_loader = dataloaders['train_age_10_loader']
     test_loader = dataloaders['test_age_10_loader']
@@ -336,7 +339,7 @@ for param in model.cnn_view_c.parameters():
     param.requires_grad = True
 for param in model.fusion_layers.parameters():
     param.requires_grad = False
-
+num_epochs_per_stage = num_epochs_stage_3
 for epoch_idx in range(num_epochs_per_stage):
     train_loader = dataloaders['train_disease_loader']
     test_loader = dataloaders['test_disease_loader']
@@ -358,7 +361,7 @@ for param in model.cnn_view_c.parameters():
     param.requires_grad = False
 for param in model.fusion_layers.parameters():
     param.requires_grad = True
-
+num_epochs_per_stage = num_epochs_stage_4
 for epoch_idx in range(num_epochs_per_stage):
     train_loader = dataloaders['train_disease_loader']
     test_loader = dataloaders['test_disease_loader']
