@@ -280,8 +280,10 @@ def train_multi_view(model, dataloader, optimizer, criterion, device, num_epochs
     return avg_loss, avg_acc
 
 # Training stages
-# num_epochs_per_stage = args.epoch // 4
-num_epochs_stage_1, num_epochs_stage_2, num_epochs_stage_3, num_epochs_stage_4 = args.epoch
+print("Loaded epoch arguments:", args.epoch)
+epoches = [int(epoch) for epoch in args.epoch.split(',')]
+num_epochs_stage_1, num_epochs_stage_2, num_epochs_stage_3, num_epochs_stage_4 = epoches
+print(f"Number of epochs per stage: {num_epochs_stage_1}, {num_epochs_stage_2}, {num_epochs_stage_3}, {num_epochs_stage_4}")
 best_accuracy = 0
 
 # Stage 1: Train View A on Gender (Freeze B and C)

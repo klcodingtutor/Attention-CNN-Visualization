@@ -7,7 +7,7 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument('--data_folder', type=str, help='Specify the path to the folder where the data is.', required=True)
 parser.add_argument('--model_save_path', type=str, help='Specify the path to save the model.', default='./')
-parser.add_argument('--epoch', type=int, help='Specify the number of epochs for the training.', default=50)
+parser.add_argument('--epoch', type=str, help='Specify the number of epochs at each step for the training.', default=50)
 parser.add_argument('--batch_size', type=int, help='Specify the batch size to be used during training/testing.', default=10)
 parser.add_argument('--num_classes', type=int, help='Specify the number of classes the dataset has.', default=6)
 parser.add_argument('--learning_rate', type=float, help='Specify the batch size to be used during training.', default=1e-4)
