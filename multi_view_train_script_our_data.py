@@ -340,7 +340,7 @@ for param in model.cnn_view_b.parameters():
 for param in model.cnn_view_c.parameters():
     param.requires_grad = True
 for param in model.fusion_layers.parameters():
-    param.requires_grad = False
+    param.requires_grad = True
 num_epochs_per_stage = num_epochs_stage_3
 for epoch_idx in range(num_epochs_per_stage):
     train_loader = dataloaders['train_disease_loader']
@@ -350,32 +350,37 @@ for epoch_idx in range(num_epochs_per_stage):
     print(f"Epoch {epoch_idx+1}/{num_epochs_per_stage}")
     print(f"Training Loss: {train_loss:.4f}, Training Accuracy: {train_acc:.2f}%")
     print(f"Testing Loss: {test_loss:.4f}, Testing Accuracy: {test_acc:.2f}%")
-    print('------------------------------------------------------------------------------')
-
-# Stage 4: Fine-tune Fusion Layers on Disease
-print("Stage 4: Fine-tuning Fusion Layers on Disease")
-optimizer_fusion = Adam(model.fusion_layers.parameters(), lr=args.learning_rate)
-for param in model.cnn_view_a.parameters():
-    param.requires_grad = False
-for param in model.cnn_view_b.parameters():
-    param.requires_grad = False
-for param in model.cnn_view_c.parameters():
-    param.requires_grad = False
-for param in model.fusion_layers.parameters():
-    param.requires_grad = True
-num_epochs_per_stage = num_epochs_stage_4
-for epoch_idx in range(num_epochs_per_stage):
-    train_loader = dataloaders['train_disease_loader']
-    test_loader = dataloaders['test_disease_loader']
-    train_loss, train_acc = train_multi_view(model, train_loader, optimizer_fusion, criterion_final, device, 1)
-    test_loss, test_acc = train_multi_view(model, test_loader, None, criterion_final, device, 1, is_train=False)
-    print(f"Epoch {epoch_idx+1}/{num_epochs_per_stage}")
-    print(f"Training Loss: {train_loss:.4f}, Training Accuracy: {train_acc:.2f}%")
-    print(f"Testing Loss: {test_loss:.4f}, Testing Accuracy: {test_acc:.2f}%")
     if test_acc > best_accuracy:
         torch.save(model.state_dict(), args.model_save_path.rstrip('/') + '/multi_view_attention_cnn_face_tasks.pth')
         best_accuracy = test_acc
         print("Model is saved!")
+
     print('------------------------------------------------------------------------------')
 
-print("Training complete!")
+# # Stage 4: Fine-tune Fusion Layers on Disease
+# print("Stage 4: Fine-tuning Fusion Layers on Disease")
+# optimizer_fusion = Adam(model.fusion_layers.parameters(), lr=args.learning_rate)
+# for param in model.cnn_view_a.parameters():
+#     param.requires_grad = False
+# for param in model.cnn_view_b.parameters():
+#     param.requires_grad = False
+# for param in model.cnn_view_c.parameters():
+#     param.requires_grad = False
+# for param in model.fusion_layers.parameters():
+#     param.requires_grad = True
+# num_epochs_per_stage = num_epochs_stage_4
+# for epoch_idx in range(num_epochs_per_stage):
+#     train_loader = dataloaders['train_disease_loader']
+#     test_loader = dataloaders['test_disease_loader']
+#     train_loss, train_acc = train_multi_view(model, train_loader, optimizer_fusion, criterion_final, device, 1)
+#     test_loss, test_acc = train_multi_view(model, test_loader, None, criterion_final, device, 1, is_train=False)
+#     print(f"Epoch {epoch_idx+1}/{num_epochs_per_stage}")
+#     print(f"Training Loss: {train_loss:.4f}, Training Accuracy: {train_acc:.2f}%")
+#     print(f"Testing Loss: {test_loss:.4f}, Testing Accuracy: {test_acc:.2f}%")
+#     if test_acc > best_accuracy:
+#         torch.save(model.state_dict(), args.model_save_path.rstrip('/') + '/multi_view_attention_cnn_face_tasks.pth')
+#         best_accuracy = test_acc
+#         print("Model is saved!")
+#     print('------------------------------------------------------------------------------')
+
+# print("Training complete!")
